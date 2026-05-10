@@ -82,8 +82,8 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/auto-approve.js" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/auto-approve.cjs" }
         ]
       }
     ],
@@ -91,31 +91,31 @@
       {
         "matcher": "Write",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/verification-guard.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-md-guard.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/drift-monitor.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.js" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/verification-guard.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-md-guard.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/drift-monitor.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.cjs" }
         ]
       },
       {
         "matcher": "Edit",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/drift-monitor.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.js" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/drift-monitor.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.cjs" }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.js" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.cjs" }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/pending-test-guard.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.js" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/pending-test-guard.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/session-summary.cjs" }
         ]
       }
     ],
@@ -123,8 +123,8 @@
       {
         "matcher": "*",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.js" },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/auto-approve.js" }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.cjs" },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/auto-approve.cjs" }
         ]
       }
     ]
