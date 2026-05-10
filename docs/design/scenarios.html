@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gugbab-voca — 사용자 시나리오</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1115;
+    --panel: #1a1d24;
+    --text: #e6e8eb;
+    --muted: #8a8f99;
+    --accent: #4f8cff;
+    --accent-2: #ff7a59;
+    --good: #4caf50;
+    --again: #ef5350;
+    --phone-bg: #ffffff;
+    --phone-text: #1a1d24;
+    --phone-muted: #6b7280;
+    --phone-border: #d1d5db;
+    --primary: #4f8cff;
+    --primary-bg: #eaf1ff;
+  }
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Pretendard, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  .deck {
+    height: 100vh; width: 100vw;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    display: none;
+    padding: 32px 48px 80px 48px;
+    flex-direction: column;
+    overflow: auto;
+  }
+  .slide.active { display: flex; }
+  .slide-header {
+    display: flex; align-items: baseline; gap: 16px;
+    margin-bottom: 8px;
+  }
+  .slide-num {
+    color: var(--muted); font-size: 14px; letter-spacing: 0.05em;
+  }
+  .slide h1 {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+  }
+  .slide h2 {
+    font-size: 18px; color: var(--muted); font-weight: 500;
+    margin-top: 4px; margin-bottom: 24px;
+  }
+  .meta-row {
+    display: flex; gap: 24px; margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .meta-row .chip {
+    background: var(--panel); padding: 6px 12px; border-radius: 6px;
+    font-size: 13px; color: var(--muted);
+  }
+  .meta-row .chip strong { color: var(--text); margin-right: 8px; }
+
+  .flow {
+    display: flex; align-items: center; gap: 12px;
+    overflow-x: auto;
+    padding: 12px 4px 24px 4px;
+    flex: 1;
+  }
+  .step {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 8px;
+  }
+  .step-label {
+    font-size: 11px; color: var(--muted);
+    text-align: center; max-width: 200px; line-height: 1.3;
+  }
+  .step-label strong { color: var(--text); display: block; margin-bottom: 2px; font-size: 12px; }
+
+  .arrow {
+    flex-shrink: 0;
+    color: var(--muted); font-size: 22px; padding: 0 4px;
+    align-self: center; margin-bottom: 28px;
+  }
+
+  /* Phone mockup */
+  .phone {
+    width: 200px; height: 380px;
+    background: var(--phone-bg);
+    border: 8px solid #2a2d35;
+    border-radius: 24px;
+    padding: 12px 10px;
+    color: var(--phone-text);
+    font-size: 11px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .phone-status {
+    display: flex; justify-content: space-between;
+    font-size: 9px; color: var(--phone-muted);
+    padding-bottom: 6px; border-bottom: 1px solid #f3f4f6;
+    margin-bottom: 10px;
+  }
+  .phone-header {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .phone-icon { font-size: 14px; color: var(--phone-muted); }
+  .phone-content { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+
+  /* Level grid (홈) */
+  .level-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+  }
+  .level-tile {
+    background: #f3f4f6; border-radius: 6px;
+    padding: 6px 4px; text-align: center;
+    font-size: 9px; line-height: 1.2;
+  }
+  .level-tile.active { background: var(--primary-bg); border: 1px solid var(--primary); }
+  .level-tile.disabled { opacity: 0.4; }
+  .level-tile .lvl { font-weight: 700; font-size: 12px; color: var(--phone-text); }
+  .level-tile .due { font-size: 8px; color: var(--primary); }
+  .level-tile .pending { font-size: 8px; color: var(--phone-muted); }
+
+  .summary-line {
+    background: #f3f4f6; border-radius: 6px;
+    padding: 8px; font-size: 10px;
+  }
+
+  /* Mode select (레벨) */
+  .mode-tile {
+    border: 2px solid var(--phone-border); border-radius: 8px;
+    padding: 12px 8px; text-align: center; flex: 1;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .mode-tile.active { border-color: var(--primary); background: var(--primary-bg); }
+  .mode-tile .mode-icon { font-size: 18px; }
+  .mode-tile .mode-label { font-size: 11px; font-weight: 600; }
+  .mode-tile .mode-meta { font-size: 9px; color: var(--phone-muted); }
+
+  /* Flashcard front/back */
+  .flashcard {
+    background: white; border: 1px solid var(--phone-border);
+    border-radius: 10px; flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 16px 8px;
+  }
+  .flashcard .word {
+    font-size: 20px; font-weight: 700;
+  }
+  .flashcard .ipa { font-size: 10px; color: var(--phone-muted); }
+  .flashcard .ko { font-size: 14px; font-weight: 600; color: var(--primary); }
+  .flashcard .pos { font-size: 9px; color: var(--phone-muted); }
+  .flashcard .ex { font-size: 9px; color: var(--phone-muted); text-align: center; padding: 0 4px; }
+  .speaker-btn {
+    border: 1px solid var(--phone-border); border-radius: 50%;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    background: white; font-size: 14px;
+  }
+  .speaker-btn.active { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
+
+  .progress-bar {
+    height: 4px; background: #e5e7eb; border-radius: 2px;
+    margin: 4px 0;
+  }
+  .progress-bar .fill { height: 100%; background: var(--primary); border-radius: 2px; }
+
+  .rating-row {
+    display: flex; gap: 6px;
+    margin-top: 4px;
+  }
+  .rating-btn {
+    flex: 1; padding: 8px; border-radius: 6px;
+    font-size: 10px; font-weight: 600; text-align: center;
+    border: none;
+  }
+  .rating-btn.again { background: #fee2e2; color: #b91c1c; }
+  .rating-btn.good { background: #dcfce7; color: #166534; }
+
+  /* Summary screen */
+  .summary-stat {
+    background: #f3f4f6; border-radius: 6px; padding: 8px;
+    text-align: center;
+  }
+  .summary-stat .num { font-size: 18px; font-weight: 700; }
+  .summary-stat .lbl { font-size: 9px; color: var(--phone-muted); }
+
+  /* Settings rows */
+  .settings-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid #f3f4f6;
+    font-size: 10px;
+  }
+  .settings-row .label { color: var(--phone-text); }
+  .settings-row .val { color: var(--primary); font-weight: 600; }
+
+  .toast {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1a1d24; color: white; font-size: 9px;
+    padding: 6px 10px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .modal-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 16px;
+  }
+  .modal {
+    background: white; border-radius: 8px; padding: 12px 8px;
+    width: 80%; font-size: 10px; text-align: center;
+    color: var(--phone-text);
+  }
+  .modal h4 { font-size: 11px; margin-bottom: 4px; }
+  .modal p { font-size: 9px; color: var(--phone-muted); margin-bottom: 8px; }
+
+  .nav {
+    position: fixed; bottom: 16px; left: 0; right: 0;
+    display: flex; justify-content: center; align-items: center; gap: 16px;
+    z-index: 10;
+  }
+  .nav button {
+    background: var(--panel); color: var(--text); border: 1px solid #2a2d35;
+    padding: 8px 16px; border-radius: 6px; font-size: 13px;
+    cursor: pointer;
+  }
+  .nav button:hover { background: #2a2d35; }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav .indicator { color: var(--muted); font-size: 13px; min-width: 80px; text-align: center; }
+
+  /* Cover */
+  .cover {
+    text-align: center; max-width: 720px; margin: auto;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .cover h1 {
+    font-size: 56px; font-weight: 800; letter-spacing: -0.03em;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .cover p { font-size: 18px; color: var(--muted); }
+  .cover .toc {
+    margin-top: 32px;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+    text-align: left;
+  }
+  .cover .toc div {
+    background: var(--panel); padding: 12px 16px; border-radius: 8px;
+    border-left: 3px solid var(--accent);
+  }
+  .cover .toc div strong { display: block; margin-bottom: 4px; }
+  .cover .toc div span { color: var(--muted); font-size: 13px; }
+  .cover .hint {
+    margin-top: 24px; color: var(--muted); font-size: 13px;
+  }
+  .cover .hint kbd {
+    background: var(--panel); border: 1px solid #2a2d35; border-radius: 4px;
+    padding: 2px 8px; font-family: monospace; font-size: 12px;
+  }
+
+  /* Annotation badges */
+  .badge {
+    display: inline-block; background: var(--accent); color: white;
+    padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: 600;
+    margin-right: 4px;
+  }
+  .badge.warn { background: var(--accent-2); }
+  .badge.muted { background: var(--muted); }
+
+  .footer-note {
+    text-align: center; color: var(--muted); font-size: 12px;
+    margin-top: 8px; padding: 0 24px;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- ========== Cover ========== -->
+  <section class="slide active" data-slide="0">
+    <div class="cover" style="margin: auto;">
+      <h1>gugbab-voca</h1>
+      <p>영어 회화 단어·문장 학습 PWA — 사용자 시나리오 시각화</p>
+      <div class="toc">
+        <div><strong>S1.</strong><span>처음 앱 진입 — PWA 설치 + 첫 학습</span></div>
+        <div><strong>S2.</strong><span>매일 복습 루틴 — 20장 학습</span></div>
+        <div><strong>S3.</strong><span>자투리 시간 — 5장 빠른 학습</span></div>
+        <div><strong>S4.</strong><span>TTS 듣기 중심 학습</span></div>
+        <div><strong>S5.</strong><span>설정 변경 — TTS·세션 크기</span></div>
+        <div><strong>S6.</strong><span>리콜 모드 — 한국어 → 영어 입력</span></div>
+        <div><strong>S7.</strong><span>클로즈 모드 — 빈칸 채우기</span></div>
+        <div><strong>S8.</strong><span>단어장 + 마킹 (known/unknown)</span></div>
+        <div><strong>+</strong><span>예외: IndexedDB 차단 / PWA 업데이트</span></div>
+      </div>
+      <div class="hint">
+        <kbd>←</kbd> <kbd>→</kbd> 키 또는 하단 버튼으로 슬라이드 이동
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== S1: 첫 진입 ========== -->
+  <section class="slide" data-slide="1">
+    <div class="slide-header">
+      <span class="slide-num">S1 / 10</span>
+      <h1>처음 앱 진입</h1>
+    </div>
+    <h2>PWA 첫 방문 → 설치 안내 → 첫 학습 1장 → "알았음"</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (출퇴근 학습)</div>
+      <div class="chip"><strong>장소</strong>지하철 / 모바일 Safari</div>
+      <div class="chip"><strong>목표</strong>설치 + 첫 카드 1장</div>
+      <div class="chip"><strong>관련 AC</strong>AC-1, AC-7</div>
+    </div>
+
+    <div class="flow">
+      <!-- Step 1: 첫 방문 + IDB 권한 OK -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:42</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>gugbab-voca</span><span class="phone-icon">⚙</span></div>
+          <div class="phone-content">
+            <div class="summary-line">오늘 복습할 카드: 0장</div>
+            <div class="level-grid">
+              <div class="level-tile active"><div class="lvl">A1</div><div class="due">시작</div></div>
+              <div class="level-tile disabled"><div class="lvl">A2</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">B1</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">B2</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">C1</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">C2</div><div class="pending">준비 중</div></div>
+            </div>
+          </div>
+          <div class="toast">앱 설치 가능 — 홈 화면에 추가</div>
+        </div>
+        <div class="step-label"><strong>1. 홈 첫 진입</strong>A1만 활성·설치 토스트</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- Step 2: A1 탭 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:42</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1</span><span></span></div>
+          <div class="phone-content">
+            <div style="font-size:10px; color: var(--phone-muted); text-align:center;">학습 모드 선택</div>
+            <div class="mode-tile active">
+              <div class="mode-icon">📖</div>
+              <div class="mode-label">단어</div>
+              <div class="mode-meta">80개 · 신규 80</div>
+            </div>
+            <div class="mode-tile">
+              <div class="mode-icon">💬</div>
+              <div class="mode-label">문장</div>
+              <div class="mode-meta">40개 · 신규 40</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. 모드 선택</strong>단어 탭</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- Step 3: 학습 앞면 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:43</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="word">apple</div>
+              <button class="speaker-btn">🔊</button>
+            </div>
+            <div style="font-size:9px; color: var(--phone-muted); text-align:center;">탭하여 뒤집기</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. 카드 앞면</strong>스피커 수동 탭 (D1: 첫 카드 수동)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- Step 4: 카드 뒤집기 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:43</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="ko">사과</div>
+              <div class="pos">명사</div>
+              <div class="ipa">/ˈæpəl/</div>
+              <div class="ex">I eat an apple.</div>
+            </div>
+            <div class="rating-row">
+              <button class="rating-btn again">모르겠음</button>
+              <button class="rating-btn good">알았음</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 카드 뒷면</strong>한국어·IPA·예문 + 자가체크</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- Step 5: 다음 카드 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:43</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 10%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">2 / 20</div>
+            <div class="flashcard">
+              <div class="word">book</div>
+              <button class="speaker-btn active">🔊</button>
+            </div>
+            <div style="font-size:9px; color: var(--phone-muted); text-align:center;">탭하여 뒤집기</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>5. 다음 카드 (자동)</strong>이후 카드는 TTS 자동재생</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: 첫 진입에서 <strong>A1만 활성</strong>(D2) · 첫 카드 TTS는 <strong>수동 탭</strong>(D1) · 이후 자동재생.
+    </div>
+  </section>
+
+  <!-- ========== S2: 매일 복습 루틴 ========== -->
+  <section class="slide" data-slide="2">
+    <div class="slide-header">
+      <span class="slide-num">S2 / 10</span>
+      <h1>매일 복습 루틴</h1>
+    </div>
+    <h2>아침 출근 길 → 14장 due 카드 + 6장 신규 = 20장 세션 → 종료 요약</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (3주차 사용자)</div>
+      <div class="chip"><strong>장소</strong>지하철 / 모바일</div>
+      <div class="chip"><strong>목표</strong>매일 20장 유지</div>
+      <div class="chip"><strong>관련 AC</strong>AC-2, AC-3, AC-5</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 홈 due 표시 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>8:30</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>gugbab-voca</span><span class="phone-icon">⚙</span></div>
+          <div class="phone-content">
+            <div class="summary-line"><strong style="color: var(--primary);">오늘 복습할 카드: 14장</strong></div>
+            <div class="level-grid">
+              <div class="level-tile active"><div class="lvl">A1</div><div class="due">14 due</div></div>
+              <div class="level-tile disabled"><div class="lvl">A2</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">B1</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">B2</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">C1</div><div class="pending">준비 중</div></div>
+              <div class="level-tile disabled"><div class="lvl">C2</div><div class="pending">준비 중</div></div>
+            </div>
+            <div style="text-align:center; margin-top: 8px;">
+              <div style="background: var(--primary); color: white; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 600;">▶ 학습 시작</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. 홈</strong>14 due 표시·FAB로 마지막 레벨 점프</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: 학습 중반 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>8:31</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 50%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">10 / 20</div>
+            <div class="flashcard">
+              <div class="word">remember</div>
+              <button class="speaker-btn active">🔊</button>
+            </div>
+            <div style="font-size:9px; color: var(--phone-muted); text-align:center;">탭하여 뒤집기</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. 학습 중반</strong>due 14 + 신규 6 인터리빙 (D8: composeQueue)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: 모르겠음 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>8:32</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 50%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">10 / 20</div>
+            <div class="flashcard">
+              <div class="ko">기억하다</div>
+              <div class="pos">동사</div>
+              <div class="ipa">/rɪˈmembər/</div>
+              <div class="ex">I remember her name.</div>
+            </div>
+            <div class="rating-row">
+              <button class="rating-btn again" style="background:#ef5350; color:white;">모르겠음</button>
+              <button class="rating-btn good">알았음</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. "모르겠음" 탭</strong>SM-2 fail → repetitions=0·1일 후 다시</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 마지막 카드 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>8:38</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 100%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">20 / 20</div>
+            <div class="flashcard">
+              <div class="ko">물</div>
+              <div class="ipa">/wɔːtər/</div>
+            </div>
+            <div class="rating-row">
+              <button class="rating-btn again">모르겠음</button>
+              <button class="rating-btn good" style="background:var(--good); color:white;">알았음</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 마지막 카드</strong>"알았음" 탭 → 자동 요약 화면</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 5: 요약 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>8:38</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>학습 완료 ✨</span><span></span></div>
+          <div class="phone-content">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+              <div class="summary-stat"><div class="num" style="color:var(--good);">17</div><div class="lbl">알았음</div></div>
+              <div class="summary-stat"><div class="num" style="color:var(--again);">3</div><div class="lbl">모르겠음</div></div>
+            </div>
+            <div class="summary-stat" style="margin-top:6px;">
+              <div class="num">8분</div>
+              <div class="lbl">학습 시간</div>
+            </div>
+            <div style="display:flex; gap:6px; margin-top: 8px;">
+              <button class="rating-btn good" style="background:var(--primary-bg); color:var(--primary);">다시</button>
+              <button class="rating-btn good" style="background:var(--primary); color:white;">홈</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>5. 세션 요약</strong>알았음/모르겠음·시간·다시/홈 선택</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: <strong>큐 합성 = due 14 + 신규 6</strong>(N=20·R=0.3) · "모르겠음"은 <strong>SM-2 fail → 즉시 재학습</strong>이 아닌 1일 후.
+    </div>
+  </section>
+
+  <!-- ========== S3: 자투리 시간 ========== -->
+  <section class="slide" data-slide="3">
+    <div class="slide-header">
+      <span class="slide-num">S3 / 10</span>
+      <h1>자투리 시간 — 빠른 10장</h1>
+    </div>
+    <h2>점심 후 5분 → 설정에서 세션 크기 10으로 줄여 빠르게 학습 → 종료</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (점심 직후)</div>
+      <div class="chip"><strong>장소</strong>회사 / 모바일</div>
+      <div class="chip"><strong>목표</strong>5분 내 10장 학습</div>
+      <div class="chip"><strong>관련 AC</strong>AC-6 (설정)</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 설정 진입 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>13:05</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>gugbab-voca</span><span class="phone-icon">⚙</span></div>
+          <div class="phone-content">
+            <div class="summary-line">오늘 복습할 카드: 8장</div>
+            <div style="font-size:10px; color: var(--phone-muted); text-align:center; margin-top: 8px;">⚙ 아이콘 탭</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. 홈에서 설정</strong>우상단 ⚙ 탭</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: 설정 화면 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>13:05</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← 설정</span><span></span></div>
+          <div class="phone-content">
+            <div class="settings-row"><span class="label">세션 크기</span><span class="val">20장 ▾</span></div>
+            <div class="settings-row"><span class="label">신규 카드 비율</span><span class="val">30%</span></div>
+            <div class="settings-row"><span class="label">TTS 자동재생</span><span class="val">켜짐</span></div>
+            <div class="settings-row"><span class="label">TTS 속도</span><span class="val">1.0x</span></div>
+            <div class="settings-row"><span class="label">자동 뒤집기</span><span class="val">수동</span></div>
+            <div class="settings-row"><span class="label">목소리</span><span class="val">en-US 1</span></div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. 설정 진입</strong>세션 크기 드롭다운 탭</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: 10장으로 변경 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>13:05</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← 설정</span><span></span></div>
+          <div class="phone-content">
+            <div class="settings-row"><span class="label">세션 크기</span><span class="val">10장 ▾</span></div>
+            <div class="modal-overlay">
+              <div class="modal">
+                <h4>세션 크기 선택</h4>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div style="background: var(--primary-bg); padding: 4px; border-radius:4px; color: var(--primary); font-weight:600;">10장 ✓</div>
+                  <div>20장</div>
+                  <div>30장</div>
+                  <div>50장</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. 10장 선택</strong>Dexie appSettings 즉시 저장</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 학습 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>13:06</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 60%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">6 / 10</div>
+            <div class="flashcard">
+              <div class="word">water</div>
+              <button class="speaker-btn active">🔊</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 10장 학습 중</strong>10장 세션 빠르게</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 5: 빠른 종료 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>13:10</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>학습 완료 ✨</span><span></span></div>
+          <div class="phone-content">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+              <div class="summary-stat"><div class="num" style="color:var(--good);">9</div><div class="lbl">알았음</div></div>
+              <div class="summary-stat"><div class="num">1</div><div class="lbl">모르겠음</div></div>
+            </div>
+            <div class="summary-stat" style="margin-top:6px;">
+              <div class="num">5분</div><div class="lbl">학습 시간</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>5. 5분 컴플리트</strong>점심 후 짧게 끝</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: 세션 크기는 <strong>10/20/30/50 중 선택</strong>(아키텍처 4.2 appSettings) · 변경 즉시 다음 세션부터 적용.
+    </div>
+  </section>
+
+  <!-- ========== S4: TTS 듣기 중심 ========== -->
+  <section class="slide" data-slide="4">
+    <div class="slide-header">
+      <span class="slide-num">S4 / 10</span>
+      <h1>TTS 듣기 중심 학습</h1>
+    </div>
+    <h2>소리 먼저 → 의미 추측 → 뒤집기로 확인 → 발음 따라하기</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (발음 강화 의도)</div>
+      <div class="chip"><strong>장소</strong>집 / 이어폰</div>
+      <div class="chip"><strong>목표</strong>듣기·발음 동시 강화</div>
+      <div class="chip"><strong>관련 AC</strong>AC-4 (TTS)</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 학습 진입 (자동재생 켜짐) -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:00</span><span>🔇 무음</span></div>
+          <div class="phone-header"><span>← A1 문장</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="word" style="font-size:14px;">"How are you?"</div>
+              <button class="speaker-btn">🔊</button>
+              <div style="font-size:9px; color: var(--phone-muted); margin-top: 4px;">탭하여 뒤집기</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. 첫 카드 (수동 TTS)</strong>D1: 첫 카드는 사용자 탭 필요</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: TTS 재생 중 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:00</span><span>🔇 무음</span></div>
+          <div class="phone-header"><span>← A1 문장</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="word" style="font-size:14px;">"How are you?"</div>
+              <button class="speaker-btn active">🔊</button>
+              <div style="font-size:9px; color: var(--primary); margin-top: 4px;">🎵 재생 중...</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. TTS 재생</strong>Web Speech API · en-US voice</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: 의미 추측 후 뒤집기 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:00</span><span>🔇 무음</span></div>
+          <div class="phone-header"><span>← A1 문장</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:13px;">"잘 지내?"</div>
+              <div class="ex">친구·동료에게 안부 인사</div>
+              <button class="speaker-btn">🔊</button>
+            </div>
+            <div class="rating-row">
+              <button class="rating-btn again">모르겠음</button>
+              <button class="rating-btn good">알았음</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. 뒤집어 의미 확인</strong>한국어는 자동재생 X (영어 학습 목적)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 다시 영어 듣기 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:01</span><span>🔇 무음</span></div>
+          <div class="phone-header"><span>← A1 문장</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:13px;">"잘 지내?"</div>
+              <div class="ex">친구·동료에게 안부 인사</div>
+              <button class="speaker-btn active">🔊</button>
+              <div style="font-size:9px; color: var(--primary); margin-top: 4px;">🎵 다시 재생</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 스피커 재탭</strong>발음 따라하기 위해 다시 듣기</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 5: 다음 카드 (자동재생) -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:01</span><span>🔇 무음</span></div>
+          <div class="phone-header"><span>← A1 문장</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 10%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">2 / 20</div>
+            <div class="flashcard">
+              <div class="word" style="font-size:13px;">"Nice to meet you."</div>
+              <button class="speaker-btn active">🔊</button>
+              <div style="font-size:9px; color: var(--primary); margin-top: 4px;">🎵 자동 재생</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>5. 다음 카드 (자동)</strong>2번째부터 자동재생 (D1)</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: <strong>한국어 자동재생 X</strong>(영어 학습 목적) · 사용자가 <strong>스피커 재탭으로 반복 듣기</strong> 가능 · iOS Safari user gesture 보존(D1).
+    </div>
+  </section>
+
+  <!-- ========== S5: 설정 변경 ========== -->
+  <section class="slide" data-slide="5">
+    <div class="slide-header">
+      <span class="slide-num">S5 / 10</span>
+      <h1>설정 변경</h1>
+    </div>
+    <h2>TTS 속도 1.0 → 0.8 / voice 변경 / 다음 세션부터 적용</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (TTS 빠르다고 느낌)</div>
+      <div class="chip"><strong>장소</strong>집 / 학습 종료 후</div>
+      <div class="chip"><strong>목표</strong>속도·voice 조정</div>
+      <div class="chip"><strong>관련 AC</strong>AC-6</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 설정 진입 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← 설정</span><span></span></div>
+          <div class="phone-content">
+            <div class="settings-row"><span class="label">세션 크기</span><span class="val">20장</span></div>
+            <div class="settings-row"><span class="label">TTS 자동재생</span><span class="val">켜짐</span></div>
+            <div class="settings-row" style="background: var(--primary-bg);"><span class="label">TTS 속도</span><span class="val">1.0x ▾</span></div>
+            <div class="settings-row"><span class="label">목소리</span><span class="val">en-US 1</span></div>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. TTS 속도 행 탭</strong></div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: 슬라이더 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← 설정</span><span></span></div>
+          <div class="phone-content">
+            <div class="modal-overlay">
+              <div class="modal">
+                <h4>TTS 속도</h4>
+                <p style="font-size:14px; color:var(--primary); font-weight:700;">0.8x</p>
+                <div style="height:4px; background:#e5e7eb; border-radius:2px; position:relative; margin: 8px 0;">
+                  <div style="position:absolute; left:30%; top:-4px; width:12px; height:12px; background:var(--primary); border-radius:50%;"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:8px; color:var(--phone-muted);">
+                  <span>0.5</span><span>1.0</span><span>1.5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. 슬라이더 0.8</strong>실시간 미리듣기 (선택)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: voice 변경 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← 설정</span><span></span></div>
+          <div class="phone-content">
+            <div class="modal-overlay">
+              <div class="modal">
+                <h4>목소리 선택</h4>
+                <div style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:9px;">
+                  <div>en-US — Samantha 🔊</div>
+                  <div style="background:var(--primary-bg); padding:2px 4px; color:var(--primary); font-weight:600;">en-US — Daniel ✓ 🔊</div>
+                  <div>en-GB — Karen 🔊</div>
+                  <div>en-AU — Lee 🔊</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. voice 드롭다운</strong>각 voice 옆 미리듣기 버튼</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 저장 + 적용 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:01</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← 설정</span><span></span></div>
+          <div class="phone-content">
+            <div class="settings-row"><span class="label">TTS 자동재생</span><span class="val">켜짐</span></div>
+            <div class="settings-row"><span class="label">TTS 속도</span><span class="val">0.8x</span></div>
+            <div class="settings-row"><span class="label">목소리</span><span class="val">Daniel</span></div>
+            <div class="toast">설정 저장됨 — 다음 학습부터 적용</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 저장 토스트</strong>Dexie에 즉시 저장 · 다음 세션 적용</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: 설정 변경은 <strong>현재 진행 중 세션에는 미적용</strong> (학습 흐름 단절 방지) · 다음 세션부터 효과.
+    </div>
+  </section>
+
+  <!-- ========== S6: 리콜 모드 ========== -->
+  <section class="slide" data-slide="6">
+    <div class="slide-header">
+      <span class="slide-num">S6 / 10</span>
+      <h1>리콜 모드 — 한국어 → 영어 입력</h1>
+    </div>
+    <h2>한국어 뜻 보고 영어 직접 입력 → 정답이면 진행 / 오답은 정답보기</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (능동 회상 학습)</div>
+      <div class="chip"><strong>목표</strong>플래시카드보다 깊은 학습</div>
+      <div class="chip"><strong>관련 AC</strong>AC-8 (M1·M3)</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 모드 선택 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>20:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span></span></div>
+          <div class="phone-content">
+            <div style="font-size:10px; color: var(--phone-muted); text-align:center;">학습 모드 선택</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+              <div class="mode-tile">
+                <div class="mode-icon">📖</div>
+                <div class="mode-label">플래시카드</div>
+                <div class="mode-meta">due 14·신규 6</div>
+              </div>
+              <div class="mode-tile active">
+                <div class="mode-icon">✏</div>
+                <div class="mode-label">리콜</div>
+                <div class="mode-meta">due 9·신규 12</div>
+              </div>
+              <div class="mode-tile" style="opacity:0.4;">
+                <div class="mode-icon">⛔</div>
+                <div class="mode-label">클로즈</div>
+                <div class="mode-meta">단어 X</div>
+              </div>
+              <div class="mode-tile">
+                <div class="mode-icon">📚</div>
+                <div class="mode-label">단어장</div>
+                <div class="mode-meta">80개</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. 리콜 모드 선택</strong>4종 타일 중 ✏ 리콜</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: 입력 화면 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>20:01</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어 · 리콜</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:18px;">사과</div>
+              <div class="pos">명사</div>
+              <div style="margin-top:8px; width:100%;">
+                <div style="border:1px solid var(--phone-border); border-radius:4px; padding:6px; font-size:10px; color:var(--phone-muted);">영어 입력...</div>
+              </div>
+            </div>
+            <button class="rating-btn good" style="background:var(--primary); color:white;">제출</button>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. 한국어 → 입력 대기</strong>"영어 입력..." placeholder</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: 입력 (정답) -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>20:01</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어 · 리콜</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:18px;">사과</div>
+              <div class="pos">명사</div>
+              <div style="margin-top:8px; width:100%;">
+                <div style="border:2px solid var(--good); border-radius:4px; padding:6px; font-size:11px; color:var(--phone-text); background:#f0fdf4;">Apple.</div>
+              </div>
+              <div style="font-size:9px; color: var(--good); margin-top:4px;">✓ 정답!</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. 정답 매칭</strong>"Apple." ≅ "apple" (구두점 무시 — M3)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 다음 카드 (오답 시나리오로 분기) -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>20:02</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어 · 리콜</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 25%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">5 / 20</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:18px;">기억하다</div>
+              <div class="pos">동사</div>
+              <div style="margin-top:8px; width:100%;">
+                <div style="border:2px solid var(--again); border-radius:4px; padding:6px; font-size:11px; color:var(--phone-text); background:#fef2f2;">remenber</div>
+              </div>
+              <div style="font-size:9px; color: var(--again); margin-top:4px;">✗ 정답이 아닙니다</div>
+            </div>
+            <div class="rating-row">
+              <button class="rating-btn good" style="background:#fff; border:1px solid var(--phone-border); color:var(--phone-text);">다시 시도</button>
+              <button class="rating-btn again" style="background:var(--again); color:white;">정답 보기</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 오타 = 오답</strong>"다시 시도" 또는 "정답 보기"</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 5: 정답 보기 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>20:02</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어 · 리콜</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 25%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">5 / 20</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:14px;">기억하다 · 동사</div>
+              <div style="font-size:9px; color: var(--phone-muted); margin-top:4px;">입력: <span style="text-decoration:line-through; color:var(--again);">remenber</span></div>
+              <div style="font-size:14px; font-weight:700; color:var(--good); margin-top:4px;">remember ✓</div>
+              <div class="ipa">/rɪˈmembər/ 🔊</div>
+            </div>
+            <button class="rating-btn good" style="background:var(--primary); color:white;">다음 카드</button>
+          </div>
+        </div>
+        <div class="step-label"><strong>5. 정답 보기</strong>SRS 'again' 확정 + 1일 후 재학습</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: <strong>관대 매칭</strong>(M3)으로 대소문자·구두점 무시 · 오타는 오답 · "정답 보기"는 SRS again, "다시 시도"는 미확정 · 3회 연속 오답 시 자동 정답 보기.
+    </div>
+  </section>
+
+  <!-- ========== S7: 클로즈 모드 ========== -->
+  <section class="slide" data-slide="7">
+    <div class="slide-header">
+      <span class="slide-num">S7 / 10</span>
+      <h1>클로즈 모드 — 빈칸 채우기 (문장 전용)</h1>
+    </div>
+    <h2>영어 문장 빈칸을 한국어 힌트 보고 채우기 → 모든 빈칸 정답이어야 good</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (문맥 학습)</div>
+      <div class="chip"><strong>목표</strong>문장 속 단어 활용 강화</div>
+      <div class="chip"><strong>관련 AC</strong>AC-9 (M2·M3)</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 클로즈 카드 표시 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:30</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 문장 · 클로즈</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 15%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">3 / 20</div>
+            <div class="flashcard" style="padding:10px 6px;">
+              <div style="font-size:11px; font-weight:600;">I ____ to school every day. 🔊</div>
+              <div style="font-size:9px; color: var(--phone-muted); margin-top:4px;">나는 매일 학교에 간다.</div>
+              <div style="margin-top:6px; width:90%;">
+                <div style="border:1px solid var(--phone-border); border-radius:4px; padding:4px; font-size:10px; color:var(--phone-muted);">빈칸 입력...</div>
+              </div>
+            </div>
+            <button class="rating-btn good" style="background:var(--primary); color:white;">제출</button>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. 빈칸 카드</strong>JSON: cloze:["go"] (M2)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: 입력 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:30</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 문장 · 클로즈</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 15%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">3 / 20</div>
+            <div class="flashcard" style="padding:10px 6px;">
+              <div style="font-size:11px; font-weight:600;">I <span style="background:var(--primary-bg); padding:1px 6px; border-radius:3px;">go</span> to school every day. 🔊</div>
+              <div style="font-size:9px; color: var(--phone-muted); margin-top:4px;">나는 매일 학교에 간다.</div>
+              <div style="margin-top:6px; width:90%;">
+                <div style="border:2px solid var(--good); border-radius:4px; padding:4px; font-size:11px; background:#f0fdf4;">go</div>
+              </div>
+              <div style="font-size:9px; color:var(--good); margin-top:4px;">✓ 정답</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. 단일 빈칸 정답</strong>"go" 입력 → 매칭 성공</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: 빈칸 2개 (부분 오답) -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:32</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 문장 · 클로즈</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 35%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">7 / 20</div>
+            <div class="flashcard" style="padding:10px 6px;">
+              <div style="font-size:10px; font-weight:600;">She ____ a book in the ____.</div>
+              <div style="font-size:8px; color: var(--phone-muted); margin-top:2px;">그녀는 도서관에서 책을 읽는다.</div>
+              <div style="margin-top:6px; display:flex; gap:4px; width:90%;">
+                <div style="flex:1; border:2px solid var(--good); border-radius:4px; padding:3px; font-size:10px; background:#f0fdf4;">reads</div>
+                <div style="flex:1; border:2px solid var(--again); border-radius:4px; padding:3px; font-size:10px; background:#fef2f2;">school</div>
+              </div>
+              <div style="font-size:8px; color:var(--again); margin-top:2px;">2번째 빈칸 ✗</div>
+            </div>
+            <div class="rating-row">
+              <button class="rating-btn good" style="background:#fff; border:1px solid var(--phone-border); color:var(--phone-text);">다시</button>
+              <button class="rating-btn again" style="background:var(--again); color:white;">정답</button>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. 빈칸 2개 부분 오답</strong>하나라도 틀리면 전체 again</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 정답 보기 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>21:33</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 문장 · 클로즈</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 35%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">7 / 20</div>
+            <div class="flashcard" style="padding:10px 6px;">
+              <div style="font-size:11px; font-weight:600;">She <span style="background:#dcfce7; padding:1px 4px;">reads</span> a book in the <span style="background:#dcfce7; padding:1px 4px;">library</span>.</div>
+              <div style="font-size:9px; color: var(--phone-muted); margin-top:4px;">그녀는 도서관에서 책을 읽는다. 🔊</div>
+              <div style="font-size:9px; color: var(--again); margin-top:4px;">입력: school → 정답: <strong>library</strong></div>
+            </div>
+            <button class="rating-btn good" style="background:var(--primary); color:white;">다음 카드</button>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 정답 보기</strong>빈칸별 ✓/✗ 표시 + 전체 again</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: 빈칸 위치는 <strong>JSON에 명시</strong>(M2 — `{english:"I {go}...", cloze:["go"]}`) · 모든 빈칸 정답이어야 good · TTS는 마커 치환 후 발화.
+    </div>
+  </section>
+
+  <!-- ========== S8: 단어장 + 마킹 ========== -->
+  <section class="slide" data-slide="8">
+    <div class="slide-header">
+      <span class="slide-num">S8 / 10</span>
+      <h1>단어장 + 마킹 (known/unknown)</h1>
+    </div>
+    <h2>전체 단어 리스트 + 학습 상태 + 검색 + 마킹 → 다음 세션 풀에 가중치 반영</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>페르소나</strong>박찬호 (자기평가)</div>
+      <div class="chip"><strong>목표</strong>모르는 단어 우선 학습</div>
+      <div class="chip"><strong>관련 AC</strong>AC-10 (M4·M5·M6)</div>
+    </div>
+
+    <div class="flow">
+      <!-- 1: 단어장 진입 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어장</span><span></span></div>
+          <div class="phone-content">
+            <div style="font-size:9px; color: var(--phone-muted);">전체 80개</div>
+            <div style="border:1px solid var(--phone-border); border-radius:4px; padding:4px 6px; font-size:9px; color: var(--phone-muted);">🔍 검색...</div>
+            <div style="display:flex; gap:3px; flex-wrap:wrap;">
+              <span style="font-size:8px; padding:2px 4px; background:var(--primary-bg); color:var(--primary); border-radius:8px;">전체</span>
+              <span style="font-size:8px; padding:2px 4px; background:#f3f4f6; border-radius:8px;">학습 X</span>
+              <span style="font-size:8px; padding:2px 4px; background:#f3f4f6; border-radius:8px;">학습 중</span>
+              <span style="font-size:8px; padding:2px 4px; background:#f3f4f6; border-radius:8px;">마스터</span>
+            </div>
+            <div style="font-size:9px; line-height: 1.4;">
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">☑ apple <span style="float:right; font-size:7px;">[마스터]</span></div>
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">◯ book <span style="float:right; font-size:7px;">[학습중]</span></div>
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">◯ zebra <span style="float:right; font-size:7px;">[학습X]</span></div>
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">✗ remember <span style="float:right; font-size:7px;">[학습중]</span></div>
+              <div style="padding:3px 0;">◯ water <span style="float:right; font-size:7px;">[학습X]</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>1. 단어장 리스트</strong>전체 80개·검색·필터·상태 배지</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 2: 마킹 토글 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어장</span><span></span></div>
+          <div class="phone-content">
+            <div style="font-size:9px; color: var(--phone-muted);">"zebra" 행 좌측 ◯ 탭</div>
+            <div style="font-size:9px; line-height: 1.4;">
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">☑ apple <span style="float:right; font-size:7px;">[마스터]</span></div>
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">◯ book <span style="float:right; font-size:7px;">[학습중]</span></div>
+              <div style="background: var(--primary-bg); padding:3px 4px; border-left:2px solid var(--primary);">✗ zebra <span style="float:right; font-size:7px;">[학습X · unknown]</span></div>
+              <div style="border-bottom:1px solid #f3f4f6; padding:3px 0;">✗ remember <span style="float:right; font-size:7px;">[학습중]</span></div>
+              <div style="padding:3px 0;">◯ water <span style="float:right; font-size:7px;">[학습X]</span></div>
+            </div>
+            <div class="toast">unknown 마킹 — 다음 세션 우선</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>2. unknown 마킹</strong>◯ → ✗ 토글 (사이클: ◯ → ☑ → ✗ → ◯)</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 3: 상세 모달 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>22:01</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어장</span><span></span></div>
+          <div class="phone-content">
+            <div class="modal-overlay">
+              <div class="modal" style="text-align:left;">
+                <div style="text-align:right; font-size:9px;">✕</div>
+                <div style="font-weight:700; font-size:12px;">apple 🔊</div>
+                <div style="font-size:9px; color: var(--phone-muted);">/ˈæpəl/ · 명사</div>
+                <div style="font-size:11px; margin:4px 0; color:var(--primary); font-weight:600;">사과</div>
+                <div style="font-size:8px; color:var(--phone-muted);">예문</div>
+                <div style="font-size:8px;">• I eat an apple. 🔊</div>
+                <div style="font-size:7px; color:var(--phone-muted);">  나는 사과를 먹는다.</div>
+                <div style="font-size:8px; color:var(--phone-muted); margin-top:4px;">학습 진도</div>
+                <div style="font-size:8px;">플래시카드: 마스터 · 리콜: 학습중</div>
+                <div style="display:flex; gap:3px; margin-top:6px;">
+                  <div style="flex:1; padding:2px; background:var(--primary-bg); color:var(--primary); border-radius:3px; font-size:8px; font-weight:600; text-align:center;">안다 ✓</div>
+                  <div style="flex:1; padding:2px; border:1px solid var(--phone-border); border-radius:3px; font-size:8px; text-align:center;">모른다</div>
+                  <div style="flex:1; padding:2px; border:1px solid var(--phone-border); border-radius:3px; font-size:8px; text-align:center;">해제</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>3. 상세 모달</strong>예문·진도·마킹 토글</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 4: 다음 학습 시 영향 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>다음날 8:30</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>← A1 단어 · 리콜</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20 · 신규 우선</div>
+            <div class="flashcard">
+              <div class="ko" style="font-size:18px;">얼룩말</div>
+              <div class="pos">명사</div>
+              <div style="font-size:8px; color:var(--again); margin-top:4px;">[unknown 마킹 · 우선 등장]</div>
+            </div>
+            <div style="font-size:8px; color:var(--phone-muted); text-align:center;">EF 2.0·interval 1일로 시작 (M6)</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>4. 다음 세션 — 영향</strong>unknown 70% 가중치로 우선 등장</div>
+      </div>
+      <div class="arrow">→</div>
+
+      <!-- 5: 가중치 시각화 -->
+      <div class="step">
+        <div class="phone" style="width:240px; height:280px;">
+          <div class="phone-status"><span>큐 합성 도식</span><span>M5</span></div>
+          <div class="phone-content" style="padding:8px;">
+            <div style="font-size:10px; font-weight:600; text-align:center; margin-bottom:6px;">신규 풀 가중치</div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:9px;"><span>✗ unknown</span><span style="color:var(--again);">70%</span></div>
+                <div style="height:6px; background:#f3f4f6; border-radius:3px;"><div style="width:70%; height:100%; background:var(--again); border-radius:3px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:9px;"><span>◯ unmarked</span><span style="color:var(--phone-muted);">25%</span></div>
+                <div style="height:6px; background:#f3f4f6; border-radius:3px;"><div style="width:25%; height:100%; background:var(--phone-muted); border-radius:3px;"></div></div>
+              </div>
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:9px;"><span>☑ known</span><span style="color:var(--good);">5%</span></div>
+                <div style="height:6px; background:#f3f4f6; border-radius:3px;"><div style="width:5%; height:100%; background:var(--good); border-radius:3px;"></div></div>
+              </div>
+            </div>
+            <div style="font-size:8px; color: var(--phone-muted); margin-top:8px; text-align:center; line-height:1.4;">
+              known도 <strong>5%로 가끔 등장</strong>해<br>자기평가 검증 기회 제공
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>5. 가중치 메커니즘</strong>known도 5%는 등장 (M5 의도)</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: 단어장 마킹 = 사용자 자기평가 → <strong>composeQueue 가중치</strong>(M5) + <strong>SRS 초기값 자동 추정</strong>(M6 known→EF 3.0·6일 / unknown→EF 2.0·1일).
+    </div>
+  </section>
+
+  <!-- ========== Exception flows ========== -->
+  <section class="slide" data-slide="9">
+    <div class="slide-header">
+      <span class="slide-num">+ / 10</span>
+      <h1>예외 플로우</h1>
+    </div>
+    <h2>IndexedDB 차단 / PWA 새 버전 알림 / TTS voice 미로딩</h2>
+    <div class="meta-row">
+      <div class="chip"><strong>관련 AC</strong>AC-7 (PWA·오프라인)</div>
+      <div class="chip"><strong>관련 D</strong>D4·D9·D10</div>
+    </div>
+
+    <div class="flow">
+      <!-- IDB 차단 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:00</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>gugbab-voca</span><span></span></div>
+          <div class="phone-content">
+            <div class="modal-overlay">
+              <div class="modal">
+                <h4>⚠ 진도 저장 불가</h4>
+                <p>브라우저 설정에서 IndexedDB가 차단되어 학습 진도를 저장할 수 없습니다.</p>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div style="background:var(--primary); color:white; padding:4px; border-radius:4px; font-weight:600;">설정 안내 보기</div>
+                  <div style="border:1px solid var(--phone-border); padding:4px; border-radius:4px;">그래도 진행 (진도 손실)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>D9: IDB 차단</strong>모달 안내 + 메모리 폴백 옵션</div>
+      </div>
+
+      <!-- PWA 업데이트 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>13:30</span><span>📶 100%</span></div>
+          <div class="phone-header"><span>gugbab-voca</span><span class="phone-icon">⚙</span></div>
+          <div class="phone-content">
+            <div class="summary-line">오늘 복습할 카드: 14장</div>
+            <div class="level-grid">
+              <div class="level-tile active"><div class="lvl">A1</div><div class="due">14</div></div>
+              <div class="level-tile disabled"><div class="lvl">A2</div></div>
+              <div class="level-tile disabled"><div class="lvl">B1</div></div>
+              <div class="level-tile disabled"><div class="lvl">B2</div></div>
+              <div class="level-tile disabled"><div class="lvl">C1</div></div>
+              <div class="level-tile disabled"><div class="lvl">C2</div></div>
+            </div>
+            <div class="toast" style="background:var(--primary);">새 버전 사용 가능 · 업데이트 ▶</div>
+          </div>
+        </div>
+        <div class="step-label"><strong>D4: PWA 업데이트</strong>prompt 모드 — 사용자 명시 동의 후 reload</div>
+      </div>
+
+      <!-- TTS voice 미로딩 -->
+      <div class="step">
+        <div class="phone">
+          <div class="phone-status"><span>9:43</span><span>📶 99%</span></div>
+          <div class="phone-header"><span>← A1 단어</span><span class="phone-icon">⏸</span></div>
+          <div class="phone-content">
+            <div class="progress-bar"><div class="fill" style="width: 5%"></div></div>
+            <div style="font-size:9px; color: var(--phone-muted);">1 / 20</div>
+            <div class="flashcard">
+              <div class="word">apple</div>
+              <button class="speaker-btn" style="opacity:0.3;">🔊</button>
+              <div style="font-size:8px; color: var(--phone-muted); margin-top: 4px;">TTS 사용 불가</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>TTS voice 0개</strong>스피커 비활성 + 툴팁 (PRD 엣지케이스)</div>
+      </div>
+
+      <!-- 데스크톱 단축키 -->
+      <div class="step">
+        <div class="phone" style="width: 280px; height: 200px;">
+          <div class="phone-status"><span>데스크톱 모드</span><span>1024px+</span></div>
+          <div class="phone-content">
+            <div style="font-size:11px; color: var(--phone-text); padding: 8px; background:#f3f4f6; border-radius:6px;">
+              <div style="font-weight:700; margin-bottom: 6px;">⌨ 키보드 단축키</div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px; font-size:9px;">
+                <div><kbd style="background:white; padding:1px 4px; border:1px solid var(--phone-border); border-radius:2px;">Space</kbd> 뒤집기</div>
+                <div><kbd style="background:white; padding:1px 4px; border:1px solid var(--phone-border); border-radius:2px;">←</kbd> 모르겠음</div>
+                <div><kbd style="background:white; padding:1px 4px; border:1px solid var(--phone-border); border-radius:2px;">→</kbd> 알았음</div>
+                <div><kbd style="background:white; padding:1px 4px; border:1px solid var(--phone-border); border-radius:2px;">P</kbd> 재생</div>
+              </div>
+              <div style="font-size:8px; color: var(--phone-muted); margin-top:6px;">데스크톱 only · pointer:fine 감지</div>
+            </div>
+          </div>
+        </div>
+        <div class="step-label"><strong>D10: 단축키</strong>데스크톱에서만 표시 · 모바일 X</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 핵심: 모든 예외는 <strong>학습을 차단하지 않고 우회 가능한 경로</strong> 제공 · 사용자에게 손실·제약 명시.
+    </div>
+  </section>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prev">← 이전</button>
+  <span class="indicator" id="indicator">1 / 10</span>
+  <button id="next">다음 →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const indicator = document.getElementById('indicator');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  let current = 0;
+  const total = slides.length;
+
+  function show(i) {
+    slides.forEach((s, idx) => s.classList.toggle('active', idx === i));
+    indicator.textContent = `${i + 1} / ${total}`;
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === total - 1;
+    current = i;
+  }
+
+  prevBtn.addEventListener('click', () => show(Math.max(0, current - 1)));
+  nextBtn.addEventListener('click', () => show(Math.min(total - 1, current + 1)));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') show(Math.max(0, current - 1));
+    else if (e.key === 'ArrowRight') show(Math.min(total - 1, current + 1));
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(total - 1);
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
