@@ -42,12 +42,28 @@ src/
     settings.tsx           # /settings : 설정
     not-found.tsx          # 404
   features/
-    learning/              # 학습 도메인
-      composeQueue.ts      # due + new 합성 알고리즘
+    learning/              # 학습 도메인 (모든 모드 공통)
+      composeQueue.ts      # due + new 합성 (마킹 가중치 포함, M5)
       session.ts           # 세션 상태 머신
       hooks/
         useSession.ts
-        useFlashcard.ts
+    flashcard/             # Mode A: 플래시카드
+      Flashcard.tsx        # 앞면·뒷면·뒤집기
+      useFlashcard.ts
+    recall/                # Mode B: 한→영 입력 (M3)
+      RecallPrompt.tsx     # 한국어 + 입력창
+      AnswerInput.tsx      # 입력 + 매칭 + 정답보기
+      useRecall.ts
+    cloze/                 # Mode C: 빈칸 채우기 (M2)
+      ClozePrompt.tsx      # 영어 빈칸 + 입력창
+      ClozeBlank.tsx       # 빈칸 셀 (마커 파싱)
+      useCloze.ts
+    vocabulary/            # Mode D: 단어장 (학습 X) (M4·M5)
+      VocabularyList.tsx   # 리스트 + 검색
+      VocabularyItem.tsx   # 행 + 상태 배지 + 마킹 토글
+      VocabularyDetail.tsx # 상세 모달
+      useVocabulary.ts
+      filter.ts            # 검색·필터 로직
     stats/                 # 통계 (P2)
     settings/              # 설정 폼 + 저장 로직
   shared/
@@ -65,8 +81,10 @@ src/
   srs/
     sm2.ts                 # SM-2 공식 (순수 함수)
     safeReview.ts          # 시계 변경 방어 래퍼
-    rating.ts              # 2버튼 ↔ Q 매핑
-    types.ts               # SrsCard / Rating 타입
+    rating.ts              # 2버튼/자동채점 → Q 매핑
+    initialFromMark.ts     # userMark → 초기 EF·interval (M6)
+    matching.ts            # 입력 매칭 함수 (M3, recall·cloze 공용)
+    types.ts               # SrsCard / Rating / StudyMode / UserMark 타입
   tts/
     useSpeak.ts            # React 훅
     voices.ts              # loadVoices + pickEnglishVoice
@@ -115,15 +133,25 @@ public/
 
 ### 3.1 라우트 목록
 
-| 경로 | 컴포넌트 | loader 사용 | 비고 |
+> **변경 이력 (2026-05-10)**: 학습 모드 4종 확장에 따라 라우트 재구성. 기존 `/learn/:cefr/:mode`(여기서 :mode='word'|'sentence')는 `/learn/:cefr/:cardType/:studyMode`로 분할. 단어장 라우트 추가.
+
+| 경로 | 컴포넌트 | loader | 비고 |
 |---|---|:---:|---|
 | `/` | `home.tsx` | ✓ | 레벨 카드 6개 + 각 레벨 due 카드 수 |
-| `/level/:cefr` | `level.tsx` | ✓ | 모드 선택. `:cefr` validate 후 진입 |
-| `/learn/:cefr/:mode` | `learn.tsx` | ✓ | 학습 세션. queue 초기화는 loader에서 |
+| `/level/:cefr` | `level.tsx` | ✓ | 콘텐츠 타입(word·sentence) 선택 |
+| `/level/:cefr/:cardType` | `mode.tsx` | ✓ | 학습 모드 선택 (flashcard·recall·cloze·vocabulary). cardType=word일 때 cloze 비활성 |
+| `/learn/:cefr/:cardType/:studyMode` | `learn.tsx` | ✓ | 학습 세션. studyMode∈{flashcard,recall,cloze}. 큐 초기화는 loader에서 |
+| `/vocabulary/:cefr/:cardType` | `vocabulary.tsx` | ✓ | 단어장 리스트 + 학습 상태 + 검색 + 마킹 토글 |
+| `/vocabulary/:cefr/:cardType/:cardId` | `vocabularyDetail.tsx` | ✓ | 단어 상세 모달 (예문·IPA·TTS·마킹) |
 | `/summary` | `summary.tsx` | ✗ | 메모리 state 의존 — 직접 진입 시 홈으로 |
 | `/stats` | `stats.tsx` | ✓ | P2 |
 | `/settings` | `settings.tsx` | ✓ | 설정 폼 (Dexie 즉시 저장) |
 | `*` | `not-found.tsx` | ✗ | 404 |
+
+URL 파라미터 enum:
+- `:cefr` ∈ `'A1'..'C2'`
+- `:cardType` ∈ `'word' | 'sentence'`
+- `:studyMode` ∈ `'flashcard' | 'recall' | 'cloze'` (단어장은 별도 라우트)
 
 ### 3.2 React Router v7 모드 선택
 
@@ -180,12 +208,15 @@ public/
 
 ### 4.2 테이블
 
+> **변경 이력 (2026-05-10)**: M1·M5·M6 결정에 따라 `cardProgress` PK가 `[cardId+studyMode]` 복합 키로 변경. `cardMark` 테이블 신설 (단어장 마킹 분리).
+
 #### `cardProgress`
 
 | 필드 | 타입 | 인덱스 | 설명 |
 |---|---|---|---|
-| `cardId` | string | PK | `WordEntry.id` 또는 `SentenceEntry.id` (불변) |
-| `cardType` | `'word' \| 'sentence'` | ✓ | 모드 구분 |
+| `cardId` | string | **PK part** | `WordEntry.id` 또는 `SentenceEntry.id` (불변) |
+| `studyMode` | `'flashcard' \| 'recall' \| 'cloze'` | **PK part** | 학습 모드. 같은 카드라도 모드별 SRS 분리 (M1) |
+| `cardType` | `'word' \| 'sentence'` | ✓ | 콘텐츠 타입 구분 |
 | `level` | `'A1'..'C2'` | ✓ | CEFR |
 | `state` | `'new' \| 'learning' \| 'review' \| 'relearning'` | ✓ | SRS 상태 머신 |
 | `dueAt` | number (epoch ms) | ✓ | 다음 노출 시각 |
@@ -193,14 +224,32 @@ public/
 | `repetitions` | number | | SM-2 n |
 | `easeFactor` | number | | SM-2 EF (floor 1.3) |
 | `intervalDays` | number | | 현재 간격 (일) |
-| `lapses` | number | | "모르겠음" 누적 |
-| `lastRating` | `'again' \| 'good'` | | 마지막 자가체크 |
+| `lapses` | number | | "모르겠음"/오답 누적 |
+| `lastRating` | `'again' \| 'good'` | | 마지막 채점 결과 |
 
 **복합 인덱스:**
-- `[cardType+level+dueAt]` — 모드·레벨별 due 조회 (학습 시작 시 핵심)
-- `[cardType+level+state]` — 신규 카드 카운트·필터
+- `[studyMode+cardType+level+dueAt]` — 학습 시작 시 due 조회 (학습 모드별)
+- `[studyMode+cardType+level+state]` — 신규 카드 카운트·필터
+- `[cardId+studyMode]` — PK 자체 (Dexie는 `&[a+b]` 복합 PK 표기)
 
-> 근거: indexeddb-dexie SKILL.md "복합 인덱스는 왼쪽 우선 정렬" — 학습 시작 시 `where('[cardType+level+dueAt]').between(['word','A1',0], ['word','A1',now])`로 단일 인덱스 스캔.
+> 근거: indexeddb-dexie SKILL.md "복합 인덱스는 왼쪽 우선 정렬" — 학습 시작 시 `where('[studyMode+cardType+level+dueAt]').between(['flashcard','word','A1',0], ['flashcard','word','A1',now])`로 단일 인덱스 스캔.
+
+#### `cardMark` (신규 — M5·M6)
+
+단어장에서 사용자가 토글한 자기평가. `studyMode`에 무관하게 *카드 1개당 1개* 마킹.
+
+| 필드 | 타입 | 인덱스 | 설명 |
+|---|---|---|---|
+| `cardId` | string | **PK** | `WordEntry.id` 또는 `SentenceEntry.id` |
+| `cardType` | `'word' \| 'sentence'` | ✓ | 단어장 필터링 |
+| `level` | `'A1'..'C2'` | ✓ | 단어장 필터링 |
+| `mark` | `'known' \| 'unknown'` | ✓ | null이면 row 자체가 없음 (storage 절약) |
+| `markedAt` | number | | 마킹 시각 |
+
+**복합 인덱스:**
+- `[cardType+level+mark]` — 단어장에서 mark별 카운트 표시
+
+> 의도: `cardProgress`에 `userMark` 필드를 합치지 않고 분리한 이유는 (a) 학습 모드별 row가 여러 개라도 마킹은 1개여야 함, (b) 단어장에서 마킹은 *학습 X 카드*에도 가능 — `cardProgress` 미존재 카드도 마킹 가능해야 함.
 
 #### `appSettings` (key-value)
 
@@ -237,11 +286,15 @@ public/
 ```typescript
 // db/schema.ts — 시그니처만
 this.version(1).stores({
-  cardProgress: 'cardId, cardType, level, state, dueAt, [cardType+level+dueAt], [cardType+level+state]',
-  appSettings: 'key',
-  sessionLog: '++id, startedAt, level, mode, [level+mode+startedAt]',
+  cardProgress: '&[cardId+studyMode], cardId, studyMode, cardType, level, state, dueAt, ' +
+                '[studyMode+cardType+level+dueAt], [studyMode+cardType+level+state]',
+  cardMark:     '&cardId, cardType, level, mark, [cardType+level+mark]',
+  appSettings:  '&key',
+  sessionLog:   '++id, startedAt, level, cardType, studyMode, [level+cardType+studyMode+startedAt]',
 })
 ```
+
+> Dexie 표기: `&` = unique·`++` = auto-increment·`[a+b]` = 복합 인덱스. PK는 첫 항목 (단일 또는 `&[a+b]`).
 
 ### 4.4 마이그레이션 정책
 
@@ -267,15 +320,20 @@ this.version(1).stores({
 
 ## 5. SRS 인터페이스 정의
 
+> **변경 이력 (2026-05-10)**: M1·M5·M6 결정 반영. `studyMode` 필드 추가, `userMark` 기반 초기값 결정 함수 추가.
+
 ### 5.1 타입 정의 (시그니처)
 
 ```typescript
 // srs/types.ts
 export type SrsState = 'new' | 'learning' | 'review' | 'relearning'
-export type SrsRating = 'again' | 'good'  // 2버튼 모드
+export type SrsRating = 'again' | 'good'  // 2-rating system
+export type StudyMode = 'flashcard' | 'recall' | 'cloze'
+export type UserMark = 'known' | 'unknown' | null
 
 export interface SrsCard {
   cardId: string
+  studyMode: StudyMode    // 같은 cardId라도 모드별 별도 row (M1)
   cardType: 'word' | 'sentence'
   level: 'A1'|'A2'|'B1'|'B2'|'C1'|'C2'
   state: SrsState
@@ -297,6 +355,17 @@ export interface SrsResult {
   card: SrsCard            // 갱신된 카드
   nextDueAt: number        // 편의용 (= card.dueAt)
 }
+
+// srs/initialFromMark.ts — M6 결정 반영
+export interface InitialSrsState {
+  easeFactor: number
+  intervalDays: number
+}
+
+export function initialFromMark(mark: UserMark): InitialSrsState
+//   known   → { ef: 3.0, intervalDays: 6 }
+//   unknown → { ef: 2.0, intervalDays: 1 }
+//   null    → { ef: 2.5, intervalDays: 1 }  (SM-2 표준)
 ```
 
 ### 5.2 2버튼 매핑 결정
@@ -339,16 +408,17 @@ export function safeReview(
 | 시계 과거 변경 방어 | `safeReview`에서 now 보정 |
 | 연속 'good' 시 dueAt 증가 | 단위 테스트로 검증: 10회 good → prevDue < currDue |
 
-### 5.5 학습 큐 합성 알고리즘 (의사코드)
+### 5.5 학습 큐 합성 알고리즘 (의사코드, M5 반영)
 
 ```text
 // features/learning/composeQueue.ts
 function composeQueue(
-  progress: SrsCard[],         // 해당 cardType+level의 모든 진도
-  contentIds: string[],        // 해당 cardType+level의 모든 콘텐츠 id
+  progress: SrsCard[],          // 해당 cardType+level+studyMode의 모든 진도
+  contentIds: string[],         // 해당 cardType+level의 모든 콘텐츠 id
+  marks: Map<cardId, UserMark>, // 카드별 userMark
   settings: { sessionSize: N, newCardRatio: R },
   now: number
-): string[]                    // 최종 cardId 배열 (length ≤ N)
+): string[]                     // 최종 cardId 배열 (length ≤ N)
 {
   // 1. 진도 분류
   due  = progress.filter(p => p.state !== 'new' && p.dueAt <= now)
@@ -358,22 +428,42 @@ function composeQueue(
     progress.find(p => p.cardId === id)?.state === 'new'
   )
 
-  // 2. 정원 계산
-  dueCount = min(due.length, floor(N * (1 - R)))
-  newCount = min(newPool.length, N - dueCount)
+  // 2. 신규 풀 마킹별 분리 (M5)
+  newUnknown  = newPool.filter(id => marks.get(id) === 'unknown')
+  newUnmarked = newPool.filter(id => marks.get(id) == null)
+  newKnown    = newPool.filter(id => marks.get(id) === 'known')
 
-  // 3. 셔플
-  pickedDue = due.slice(0, dueCount)            // dueAt 오래된 순 우선
-  pickedNew = shuffle(newPool).slice(0, newCount)
+  // 3. 정원 계산
+  dueCount   = min(due.length, floor(N * (1 - R)))
+  newTarget  = N - dueCount
 
-  // 4. 라운드로빈 인터리빙 (단조로움 회피)
-  result = interleave(pickedDue, pickedNew, ratio = dueCount : newCount)
+  // 4. 신규 풀 가중치 분배 (70/25/5)
+  qUnknown   = round(newTarget * 0.70)
+  qUnmarked  = round(newTarget * 0.25)
+  qKnown     = newTarget - qUnknown - qUnmarked   // 잔여 흡수
 
-  return result.map(p => p.cardId ?? p)
+  pickedNew = []
+  pickedNew += take(shuffle(newUnknown),  qUnknown)
+  pickedNew += take(shuffle(newUnmarked), qUnmarked)
+  pickedNew += take(shuffle(newKnown),    qKnown)
+
+  // 5. 부족분 보충 (channel-fallback): unknown 부족 → unmarked → known
+  while (|pickedNew| < newTarget) {
+    candidates = [...newUnmarked, ...newKnown, ...newUnknown]
+                  .filter(c => not picked)
+    if (empty) break
+    pickedNew += shuffle(candidates).first()
+  }
+
+  // 6. due 셔플 (dueAt 동률 처리)
+  pickedDue = due.slice(0, dueCount)
+
+  // 7. 라운드로빈 인터리빙 (단조로움 회피)
+  return interleave(pickedDue, pickedNew, ratio = dueCount : newTarget)
 }
 ```
 
-> 근거: PRD "셔플 vs SRS 우선순위 정책" 섹션 그대로 구현. due 카드가 N*(1-R)을 초과하면 신규 0개 가능 — *복습 우선*이 의도된 동작.
+> 근거: PRD "셔플 vs SRS 우선순위 정책" 섹션 그대로 구현. due 카드가 N*(1-R)을 초과하면 신규 0개 가능 — *복습 우선*이 의도된 동작. 마킹 가중치 70/25/5는 M5 결정.
 
 ### 5.6 자가체크 처리 흐름
 
@@ -389,6 +479,61 @@ function composeQueue(
 **보장:**
 - DB write 완료 전 다음 카드 표시 가능 (UX 우선) — write 실패 시 토스트 + 재시도
 - 200ms 디바운스로 더블 클릭 방어 (PRD 엣지케이스)
+
+### 5.7 입력 매칭 정책 (M3, 리콜·클로즈 공용)
+
+```typescript
+// srs/matching.ts — 순수 함수, React 의존 0
+export function normalize(s: string): string {
+  return s.trim()
+          .toLowerCase()
+          .replace(/[.,?!;:'"]/g, '')
+}
+
+export function isCorrect(input: string, expected: string): boolean {
+  return normalize(input) === normalize(expected)
+}
+
+export function isAllCorrect(inputs: string[], expecteds: string[]): boolean {
+  if (inputs.length !== expecteds.length) return false
+  return inputs.every((v, i) => isCorrect(v, expecteds[i]))
+}
+```
+
+**규칙:**
+- 대소문자·공백·기본 구두점 (`.,?!;:'"`)만 무시
+- 오타는 오답 (Levenshtein 미적용 — 학습 효과 우선)
+- 클로즈 빈칸 N개는 *모두* 정답이어야 `good`. 하나라도 틀리면 전체 `again`
+
+### 5.8 정답 보기 / 다시 시도 흐름 (리콜·클로즈)
+
+```text
+사용자 입력 → submit
+ → isCorrect(input, expected)
+   ├─ true  → answerCard('good') → 다음 카드
+   └─ false → 입력창 아래 "다시 시도" + "정답 보기" 버튼 노출
+              ├─ "다시 시도" 탭 → 입력 클리어, 같은 카드 유지 (count++)
+              └─ "정답 보기" 탭 → 정답 노출 + answerCard('again') → "다음 카드"
+   * count >= 3 자동으로 "정답 보기" 모드 강제 (좌절 방지)
+```
+
+`answerCard`는 플래시카드와 동일한 진입점 — 내부에서 `safeReview` 호출, 모드별 progress row 갱신.
+
+### 5.9 단어장 마킹 (M5·M6)
+
+```typescript
+// db/repository/markRepo.ts (시그니처)
+export async function getMark(cardId: string): Promise<UserMark>
+export async function setMark(cardId: string, mark: 'known' | 'unknown'): Promise<void>
+export async function clearMark(cardId: string): Promise<void>
+export async function listMarksByLevel(cefr: CEFR, cardType: CardType): Promise<Map<string, UserMark>>
+
+// 마킹 변경 시 영향:
+// 1. 즉시 단어장 UI 갱신 (Dexie useLiveQuery)
+// 2. 다음 학습 세션의 composeQueue가 새 마킹 반영
+// 3. 진행 중 세션은 영향 X (큐 합성은 startSession 시점 1회)
+// 4. 신규 학습 시 initialFromMark()로 초기 EF·interval 결정 (M6)
+```
 
 ---
 
