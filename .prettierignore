@@ -1,0 +1,10 @@
+dist/
+coverage/
+node_modules/
+pnpm-lock.yaml
+*.md
+docs/
+.claude/
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
