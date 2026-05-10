@@ -16,19 +16,29 @@
 
 ## 핵심 의사결정 요약
 
+> **갱신 이력 (2026-05-10)**: 학습 모드 4종으로 확장. 단어장 마킹 기능 추가. SRS 알고리즘 SM-2로 확정. 자세한 결정은 본 섹션 + AC-1~AC-10 참조.
+
 | 항목 | 결정 |
 |------|------|
 | 플랫폼 | 웹/PWA (모바일 네이티브 X) |
 | 인증·계정 | 없음 — 단일 디바이스 로컬 사용 |
-| 백엔드 | 없음 — 정적 호스팅 (Vercel/Netlify 등) |
-| 콘텐츠 추가 | Claude로 정적 JSON 갱신, 사용자 입력 UI 없음 |
-| 레벨 | CEFR 6단계 (A1·A2·B1·B2·C1·C2) |
-| 학습 흐름 | 레벨 선택 → 모드 선택(단어/문장) → 셔플 + SRS due 카드 합성 → 순차 표시 |
-| 인터랙션 | 플래시카드 뒤집기 + "알았음/모르겠음" 자가체크 |
-| SRS | FSRS 또는 SM-2 (구현 단계에서 결정) |
-| 진도 저장 | IndexedDB (Dexie.js) |
-| TTS | Web Speech API (`speechSynthesis`) |
-| UI | `@gugbab-ui/styled-mui` (별도 npm) |
+| 백엔드 | 없음 — 정적 호스팅 (Vercel) |
+| 콘텐츠 추가 | Claude로 CEFR 가이드 기반 직접 생성. JSON에 클로즈 빈칸 위치 명시 |
+| 레벨 | CEFR 6단계 (A1·A2·B1·B2·C1·C2). 첫 출시는 A1만 |
+| **학습 모드 (4종)** | **플래시카드 / 리콜(한→영 입력) / 클로즈(빈칸 채우기) / 단어장(조회 only)** |
+| **모드별 콘텐츠 적용** | 단어: 플래시카드·리콜·단어장 / 문장: 플래시카드·리콜·클로즈·단어장 |
+| 학습 흐름 | 레벨 → 모드(4종 중 1) → 셔플 + SRS due 합성 → 순차 표시 |
+| 자가체크 (플래시카드) | "알았음 / 모르겠음" 2버튼 |
+| **자동 채점 (리콜·클로즈)** | **입력 = 정답 → 자동 진행 / 오답 → "정답 보기" 버튼 → 정답 노출 후 진행** |
+| **입력 매칭 정책** | **관대 — `trim().toLowerCase()` + 구두점 제거** (예: `"Apple."` ≅ `"apple"`) |
+| **단어장 마킹** | **`userMark: 'known'\|'unknown'\|null` — 단어장에서 토글** |
+| **마킹 가중치** | **신규 풀 비율: unknown 70% / unmarked 25% / known 5%** |
+| **마킹 → SRS 초기값** | **known 첫 학습: EF 3.0·interval 6일 / unknown: EF 2.0·interval 1일** |
+| SRS 알고리즘 | **SM-2 직접 구현** (50~70줄, 라이브러리 X). FSRS는 Phase 7 검토 |
+| **SRS 진도 PK** | **`[cardId+mode]` 복합** — 같은 카드라도 모드별 SRS 분리 |
+| 진도 저장 | IndexedDB (Dexie 4.x) |
+| TTS | Web Speech API (`speechSynthesis`) — 듣기만 |
+| UI | `@gugbab/styled-mui` + `@gugbab/tokens` (npm 퍼블릭, peer: react>=18) |
 | 음성 인식·발음 평가·실시간 대화 | **모두 비범위** |
 
 ---
@@ -44,24 +54,48 @@
    - I WANT TO 홈 화면에서 CEFR 6단계 중 학습할 레벨을 선택한다
    - SO THAT 내 수준에 맞는 콘텐츠로 학습할 수 있다
 
-2. **모드 선택 (단어/문장)**
+2. **콘텐츠 타입 선택 (단어/문장)**
    - AS A 학습자
-   - I WANT TO 레벨을 고른 뒤 단어 학습 또는 문장 학습 중 하나를 선택한다
+   - I WANT TO 레벨 진입 후 단어 학습 또는 문장 학습 중 하나를 선택한다
    - SO THAT 어휘와 표현 학습을 분리해 집중할 수 있다
 
-3. **플래시카드 학습**
+3. **학습 모드 선택 (4종)**
+   - AS A 학습자
+   - I WANT TO 콘텐츠 타입 진입 후 *플래시카드 / 리콜 / 클로즈 / 단어장* 중 하나를 선택한다
+   - SO THAT 학습 단계·집중 영역에 맞춘 다양한 방식으로 학습한다
+   - 비고: 단어 콘텐츠에는 클로즈 모드 미적용. 문장 콘텐츠는 4종 모두 적용
+
+4. **플래시카드 학습 (Mode A)**
    - AS A 학습자
    - I WANT TO 영어 면을 보고 한국어 면으로 뒤집은 후 "알았음/모르겠음"을 입력한다
    - SO THAT 자가 인지 과정을 통해 기억을 강화한다
 
-4. **TTS 듣기**
+5. **리콜 학습 (Mode B, 한→영 입력)**
    - AS A 학습자
-   - I WANT TO 카드의 영어 텍스트를 음성으로 들을 수 있다
+   - I WANT TO 한국어 뜻을 보고 영어 단어/문장을 직접 키보드로 입력한다
+   - SO THAT 능동적 회상(active recall)을 통해 더 깊은 학습 효과를 얻는다
+   - 자동 채점 후: 정답이면 다음 카드, 오답이면 "정답 보기" 버튼 → 정답 노출 후 진행
+
+6. **클로즈 학습 (Mode C, 빈칸 채우기 — 문장만)**
+   - AS A 학습자
+   - I WANT TO 영어 문장의 빈칸 위치에 들어갈 단어를 입력한다
+   - SO THAT 문맥 속에서 단어를 활용하는 능력을 강화한다
+   - 빈칸 위치는 콘텐츠 JSON의 `cloze` 필드에서 명시 (`{english:"I {go}...", cloze:["go"]}`)
+
+7. **단어장 (Mode D, 조회 + 마킹)**
+   - AS A 학습자
+   - I WANT TO CEFR 레벨별 전체 단어/문장을 리스트로 본다. 검색·학습 상태(X/중/마스터)를 확인할 수 있다
+   - I WANT TO 각 카드를 "안다(known)" 또는 "모른다(unknown)"로 마킹하여 학습 우선순위를 조정할 수 있다
+   - SO THAT 이미 아는 단어는 학습 풀에서 빈도를 낮추고, 모르는 단어를 우선 학습할 수 있다
+
+8. **TTS 듣기**
+   - AS A 학습자
+   - I WANT TO 카드의 영어 텍스트를 음성으로 들을 수 있다 (모든 학습 모드 + 단어장 상세)
    - SO THAT 발음·억양 감각을 함께 익힌다
 
-5. **세션 종료 요약**
+9. **세션 종료 요약**
    - AS A 학습자
-   - I WANT TO 한 세션이 끝나면 본 카드 수, 알았음/모르겠음 비율을 확인한다
+   - I WANT TO 한 세션이 끝나면 본 카드 수, 정답률(또는 알았음 비율)을 확인한다
    - SO THAT 학습량을 인지하고 다음 세션으로 동기를 이어간다
 
 ### P1 — 보조
@@ -321,6 +355,76 @@ THEN  홈/학습/세션 종료/설정 화면이 모두 정상 동작한다
 AND   IndexedDB에 진도 변경이 정상 저장된다
 ```
 
+### AC-8: 리콜 모드 (한→영 입력)
+
+```
+GIVEN 사용자가 A1 단어 리콜 모드에 진입했고 카드 한국어 면이 "사과"로 표시되어 있다
+WHEN  사용자가 입력창에 "Apple."을 입력하고 제출한다
+THEN  관대 매칭(`trim().toLowerCase()` + 구두점 제거) 적용 결과 "apple"과 일치하므로 정답 처리
+AND   해당 카드의 cardProgress(`[cardId+'recall']`)가 SRS "good" 입력으로 갱신
+AND   다음 카드 한국어 면이 표시된다
+```
+
+```
+GIVEN 카드 한국어 면이 "사과"로 표시
+WHEN  사용자가 "appel"(오타)을 입력하고 제출한다
+THEN  매칭 실패. 입력창 아래 "정답 보기" 버튼이 활성화되고 입력은 유지된다
+WHEN  사용자가 "정답 보기"를 누른다
+THEN  정답 "apple"이 노출되고 cardProgress가 SRS "again"으로 갱신
+AND   "다음 카드" 버튼이 활성화된다
+```
+
+### AC-9: 클로즈 모드 (빈칸 채우기, 문장 전용)
+
+```
+GIVEN A1 문장 클로즈 모드에 진입. 카드 데이터:
+  { english: "I {go} to school every day.", cloze: ["go"] }
+WHEN  학습 화면에 진입한다
+THEN  "I _____ to school every day." 형태로 빈칸 표시
+AND   입력창과 한국어 힌트("나는 매일 학교에 간다")가 표시된다
+```
+
+```
+GIVEN 빈칸 표시 상태
+WHEN  사용자가 "go"를 입력하고 제출한다
+THEN  매칭 성공. cardProgress(`[cardId+'cloze']`)가 SRS "good"으로 갱신, 다음 카드 표시
+```
+
+```
+GIVEN 빈칸이 2개 이상인 카드 (예: cloze: ["go", "every"])
+WHEN  학습 화면에 진입한다
+THEN  빈칸별로 입력창이 별도 표시되며, 모든 입력이 정답이어야 "good" 처리
+AND   하나라도 오답이면 "정답 보기" 버튼 활성화
+```
+
+### AC-10: 단어장 + 마킹
+
+```
+GIVEN A1 단어장(`/vocabulary/A1`)에 진입. 단어 80개와 각 카드의 학습 상태가 표시된다
+WHEN  사용자가 검색창에 "app"을 입력한다
+THEN  영어/한국어에 "app"이 포함된 카드만 필터링된다
+AND   각 카드 옆에 학습 상태 배지(학습 X / 학습 중 / 마스터)가 표시된다
+```
+
+```
+GIVEN 단어장에서 "apple" 카드의 마킹 상태가 null(미마킹)
+WHEN  사용자가 카드의 "안다(known)" 토글을 누른다
+THEN  cardProgress.userMark = 'known'으로 저장
+AND   다음 학습 세션의 신규 풀에서 해당 카드는 5% 가중치로 추출 (거의 안 나옴)
+```
+
+```
+GIVEN userMark가 'known'인 단어를 처음 학습 (cardProgress 미존재 또는 state='new')
+WHEN  학습 세션이 시작되어 해당 카드가 표시된다
+THEN  플래시카드 첫 학습 시 SRS 초기값이 EF=3.0, intervalDays=6으로 설정 (자동 추정)
+```
+
+```
+GIVEN userMark가 'unknown'인 단어를 처음 학습
+WHEN  세션 시작 시 신규 풀 합성
+THEN  unknown 70% 가중치로 우선 추출되며, 첫 학습 시 SRS 초기값 EF=2.0, intervalDays=1
+```
+
 ---
 
 ## 데이터 요구사항
@@ -369,13 +473,20 @@ public/data/
 {
   "id": "s_a1_001",
   "level": "A1",
-  "english": "How are you?",
-  "korean": "어떻게 지내세요?",   // 대표 의역
-  "literal": "어떻게 너는 있니?", // (선택) 직역
-  "context": "greeting",          // (선택) 상황 태그
-  "tags": ["daily", "question"]   // (선택)
+  "english": "I {go} to school every day.",  // 클로즈 빈칸은 {word} 마커로 표기
+  "korean": "나는 매일 학교에 간다.",   // 대표 의역
+  "literal": "나는 학교에 매일 간다.", // (선택) 직역
+  "cloze": ["go"],                // 빈칸 정답 단어 배열. 마커 순서와 일치. 클로즈 모드 전용
+  "context": "daily-routine",          // (선택) 상황 태그
+  "tags": ["daily", "verb"]   // (선택)
 }
 ```
+
+> 클로즈 빈칸 규약 (M2):
+> - `english` 필드의 `{단어}` 마커가 빈칸 위치
+> - 빈칸 정답은 `cloze` 배열의 동일 인덱스 단어
+> - 빈칸 1개 이상 가능. 클로즈 모드에서만 사용
+> - 일반 표시(플래시카드/리콜)에서는 마커를 단어로 치환하여 출력 (`"I go to school every day."`)
 
 #### `manifest.json` 스키마
 
@@ -414,23 +525,28 @@ DB명: `gugbab-voca`, 버전: 1
 
 #### 테이블 1: `cardProgress`
 
+> **PK 변경 (M1)**: 기존 `cardId` 단일 PK → `[cardId+studyMode]` 복합 PK. 같은 카드라도 학습 모드별 SRS 진도를 별도로 관리한다.
+
 | 필드 | 타입 | 인덱스 | 설명 |
 |------|------|---|------|
-| `cardId` | string (PK) | ✓ | `WordEntry.id` 또는 `SentenceEntry.id` |
-| `cardType` | `"word" \| "sentence"` | ✓ | 모드 구분 |
+| `cardId` | string | PK part | `WordEntry.id` 또는 `SentenceEntry.id` |
+| `studyMode` | `"flashcard" \| "recall" \| "cloze"` | PK part | 학습 모드 (단어장은 학습 X) |
+| `cardType` | `"word" \| "sentence"` | ✓ | 콘텐츠 타입 구분 |
 | `level` | string | ✓ | CEFR 레벨 (필터링용) |
 | `state` | `"new" \| "learning" \| "review" \| "relearning"` | ✓ | SRS 상태 머신 |
 | `dueAt` | number (epoch ms) | ✓ | 다음 노출 예정 시각 |
 | `lastReviewedAt` | number (epoch ms) | | 마지막 학습 시각 |
 | `intervalDays` | number | | 현재 간격 (일) |
-| `easeFactor` | number | | SM-2 사용 시 |
-| `stability` | number | | FSRS 사용 시 |
-| `difficulty` | number | | FSRS 사용 시 |
-| `reps` | number | | 누적 학습 횟수 |
+| `easeFactor` | number | | SM-2 (default 2.5, floor 1.3) |
+| `repetitions` | number | | SM-2 n |
 | `lapses` | number | | "모르겠음" 누적 횟수 |
 | `lastRating` | `"again" \| "good"` | | 마지막 자가체크 결과 |
+| **`userMark`** | **`"known" \| "unknown" \| null`** | | **단어장에서 토글한 자기평가 (M5). 모든 모드에 공통 적용** |
 
-복합 인덱스: `[cardType+level+dueAt]`, `[cardType+level+state]` — due 카드 조회 효율화
+> 주의: `userMark`는 `(cardId, studyMode)` 단위가 아니라 **`cardId` 단위로 공유**된다 — 단어장에서 한 번 마킹하면 모든 학습 모드에 영향.
+> 구현은 `cardProgress` 테이블에 같은 cardId의 모든 row가 같은 userMark를 갖도록 sync하거나, 별도 테이블 `cardMark(cardId PK, mark)`로 분리.
+
+복합 인덱스: `[cardType+level+dueAt]`, `[cardType+level+state]`, `[studyMode+cardType+level+dueAt]` — 학습 모드별 due 조회 효율화
 
 #### 테이블 2: `sessionLog` (P1)
 
@@ -440,10 +556,11 @@ DB명: `gugbab-voca`, 버전: 1
 | `startedAt` | number | 세션 시작 시각 |
 | `endedAt` | number | 세션 종료 시각 |
 | `level` | string | |
-| `mode` | `"word" \| "sentence"` | |
+| `cardType` | `"word" \| "sentence"` | |
+| `studyMode` | `"flashcard" \| "recall" \| "cloze"` | 학습 모드 |
 | `cardsSeen` | number | 본 카드 수 |
-| `goodCount` | number | "알았음" 카운트 |
-| `againCount` | number | "모르겠음" 카운트 |
+| `goodCount` | number | 정답·"알았음" 카운트 |
+| `againCount` | number | 오답·"모르겠음" 카운트 |
 
 #### 테이블 3: `appSettings` (key-value)
 
@@ -469,9 +586,49 @@ DB명: `gugbab-voca`, 버전: 1
 
 ## SRS 입력 처리 규칙 (추상)
 
-> 알고리즘은 FSRS 또는 SM-2 중 구현 단계에서 결정. 본 PRD는 **외부 동작 규칙**만 정의한다.
+> 알고리즘은 **SM-2** 직접 구현. 본 PRD는 **외부 동작 규칙**만 정의한다.
 
-### 자가체크 입력
+### 모드별 SRS rating 결정
+
+| 학습 모드 | rating='good' 조건 | rating='again' 조건 |
+|---|---|---|
+| 플래시카드 | "알았음" 버튼 탭 | "모르겠음" 버튼 탭 |
+| 리콜 | 입력값과 정답 매칭 성공 | 매칭 실패 후 "정답 보기" |
+| 클로즈 | 모든 빈칸이 정답 | 하나라도 오답 후 "정답 보기" |
+
+### 입력 매칭 정책 (M3, 리콜·클로즈 공통)
+
+```
+function normalize(s: string): string {
+  return s.trim()
+          .toLowerCase()
+          .replace(/[.,?!;:'"]/g, '')   // 기본 구두점 제거
+}
+
+function isCorrect(input: string, expected: string): boolean {
+  return normalize(input) === normalize(expected)
+}
+```
+
+- 대소문자 무시 (`Apple` ≅ `apple`)
+- 앞뒤 공백 trim
+- 기본 구두점 (`.,?!;:'""`) 제거 — `"Apple."` ≅ `"apple"`
+- **오타는 오답** — Levenshtein 같은 관용 매칭은 도입 X (학습 효과 우선)
+- 빈칸 여러 개(클로즈)는 모든 빈칸이 정답이어야 `good`
+
+### "정답 보기" UX 규칙
+
+```
+오답 입력 → "다시 시도" / "정답 보기" 두 버튼 노출
+  - "다시 시도": 입력창 클리어, 같은 카드 유지. SRS rating 미확정
+  - "정답 보기": 정답 노출 (입력값과 비교 강조), SRS rating='again' 확정,
+                "다음 카드" 버튼 활성화
+```
+
+> 주의: "다시 시도"는 *동일 카드 동일 시도*로 카운트. SRS는 마지막 결과만 반영.
+> 단, 한 카드에서 3회 연속 오답이면 자동으로 "정답 보기" 모드 전환 (사용자 좌절 방지).
+
+### 자가체크 입력 (플래시카드 모드)
 
 | 입력 | 의미 | 다음 노출 효과 |
 |------|------|----------------|
@@ -501,27 +658,55 @@ review ──good──▶ review (간격 증가)
 
 ### 세션 카드 구성 알고리즘
 
-세션당 카드 수 `N` (기본 20), 신규 카드 비율 `R` (기본 0.3)이라 하자.
+세션당 카드 수 `N` (기본 20), 신규 카드 비율 `R` (기본 0.3), 학습 모드 `studyMode` 라 하자.
 
 ```
-1. 현재 시각 < dueAt 인 review/learning/relearning 카드 후보 = D
-2. state == "new" 인 카드 후보 = NEW
-3. 목표:
-   - dueCount   = min(|D|,    N * (1 - R))   ← 복습 우선
-   - newCount   = min(|NEW|,  N - dueCount)  ← 남은 자리에 신규
-   - 만약 |D| > N * (1 - R) 이면 newCount=0이 될 수 있음 (복습 우선)
-   - 만약 |D| 가 적으면 신규로 자리 채움
-4. due 카드는 dueAt 오름차순(가장 오래 묵은 것부터) → 그중 동시에 due면 셔플
-5. 신규 카드는 콘텐츠 JSON 순서를 무시하고 셔플
-6. 최종 N장을 둘을 1:1 라운드로빈으로 인터리빙해 단조롭지 않게 섞음
-   - 예: D D N D N D N D D N ... (가중치는 dueCount:newCount 비율)
+1. (cardType, level, studyMode) 조건의 cardProgress에서:
+   - dueAt <= now 인 review/learning/relearning 카드 후보 = D
+   - state == "new" 인 카드 후보 = NEW_PROGRESS
+2. 콘텐츠 JSON에서 cardProgress 미존재 카드 후보 = NEW_RAW
+   - NEW = NEW_PROGRESS ∪ NEW_RAW
+
+3. 마킹 가중치 적용 (M5):
+   - NEW_unknown  = NEW.filter(c => c.userMark === 'unknown')
+   - NEW_unmarked = NEW.filter(c => c.userMark == null)
+   - NEW_known    = NEW.filter(c => c.userMark === 'known')
+
+4. 목표 카운트:
+   - dueCount   = min(|D|,   floor(N * (1 - R)))   ← 복습 우선
+   - newTarget  = N - dueCount
+
+5. 신규 풀 가중치 분배 (newTarget 채우기):
+   - newUnknownCount  = round(newTarget * 0.70)  ← 70%
+   - newUnmarkedCount = round(newTarget * 0.25)  ← 25%
+   - newKnownCount    = round(newTarget * 0.05)  ← 5%
+   - 부족분(예: NEW_unknown이 0)은 우선순위 ↓ 풀에서 보충
+     unknown 부족 → unmarked → known 순으로 channel-fallback
+
+6. due 카드: dueAt 오름차순(가장 오래 묵은 것부터) → 동시 due면 셔플
+7. 각 신규 채널: 셔플 후 head N개 추출
+8. 최종: due + new를 라운드로빈 인터리빙 (단조로움 회피)
 ```
 
 ### 보장 사항
 
-- 처음 학습 시작(진도 0)에는 모든 카드가 신규 → 단순 셔플로 표시된다
+- 처음 학습 시작(진도 0)에는 모든 카드가 신규 → unknown 우선·known 거의 안 나옴
 - due 카드가 `N * (1-R)`를 초과하면 신규는 한 장도 안 나올 수 있다 (복습 우선이 의도된 동작)
 - 모든 카드가 review·미래 due면 "오늘 학습할 카드가 없습니다" 빈 상태 노출
+- known 마킹 카드도 5% 확률로 섞여 등장 → 자기평가 검증 기회 제공 (M5 의도)
+- userMark 변경은 *다음 세션부터* 반영 (현재 진행 중 큐는 영향 X)
+
+### 마킹 → 첫 학습 SRS 초기값 (M6)
+
+신규 카드(`state === 'new'` 또는 cardProgress 미존재)가 처음 학습되어 SRS 진도 row가 생성될 때, `userMark`에 따라 초기값을 다르게 설정:
+
+| userMark | 초기 EF | 초기 intervalDays | 의도 |
+|---|---|---|---|
+| `'known'` | 3.0 | 6 | 사용자가 안다고 했으므로 신뢰. 첫 학습 후 6일 뒤 검증 |
+| `'unknown'` | 2.0 | 1 | 사용자가 모른다고 했으므로 빨리·자주 검증 |
+| `null` | 2.5 | 1 | SM-2 표준 |
+
+> 주의: 자가체크/자동채점 결과(rating)도 평소처럼 SM-2에 입력된다. 마킹은 *초기값만* 결정하고, 이후 review 결과에 따라 정상 EF 진화.
 
 ---
 
