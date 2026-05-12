@@ -22,7 +22,10 @@
     "format:check": "biome format .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "test:visual:report": "playwright show-report"
   },
   "dependencies": {
     "@gugbab/styled-mui": "^1.0.0",
@@ -35,6 +38,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
     "@gugbab/biome-config": "^1.0.0",
+    "@playwright/test": "^1.60.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^25.6.2",

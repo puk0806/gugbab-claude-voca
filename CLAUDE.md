@@ -22,11 +22,11 @@
 | Phase | 내용 | 상태 |
 |---|---|---|
 | 0 | 미결 결정 (SRS·콘텐츠 시드) | ✅ 완료 — SM-2 / Claude 생성 시드 |
-| 1 | 아키텍처 설계 (`frontend-architect`) | ⏳ 진입 예정 |
-| 2 | 스캐폴딩 (Vite + React + PWA + UI 패키지 통합) | — |
-| 3 | 콘텐츠 시드 생성 (CEFR A1) | — |
-| 4 | 핵심 학습 기능 (UI 산출물부터 VR 적용) | — |
-| 5 | 통계·설정 (P1) | — |
+| 1 | 아키텍처 설계 (`frontend-architect`) | ✅ 완료 — `docs/architecture/gugbab-voca-architecture.md` |
+| 2 | 스캐폴딩 + 순수 로직 (Vite·Biome·Vitest / SRS·DB·콘텐츠 로더·큐) | ✅ 완료 (PR #4·#5) |
+| 3 | 시각 회귀(VR) 인프라 — Playwright + GH Actions 라벨 기반 베이스라인 승인 | ⏳ 진행 중 |
+| 4 | 핵심 UI (라우팅·4모드 학습·단어장) + A1 콘텐츠 시드 — VR 첫 베이스라인 등록 | — |
+| 5 | 보강 UI (세션 종료 요약·통계·설정·P1) | — |
 | 6 | PWA + Vercel 배포 | — |
 | 7 | P2 보강 (export/import·다크모드 등) | — |
 

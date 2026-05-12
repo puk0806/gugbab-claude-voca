@@ -31,17 +31,31 @@
 
 ## 3. 시각 회귀(VR) 테스트
 
-UI 컴포넌트가 등장하는 시점(Phase 4 또는 Phase 2 후반부)부터 시각 회귀 테스트 적용한다.
+`feature/visual-regression-setup` 단독 PR로 도입. 단일 앱 컨텍스트라 sibling 프로젝트(`01_gugbab-claude-package`)의 Storybook 빌드 단계는 생략하고 *라우트 페이지 직접 캡처* 방식으로 단순화.
 
-**참고 패턴**: 형제 프로젝트 `/Users/lf/Desktop/gugbab-workspace/01_gugbab-claude-package`
+**구성**:
+- 도구: Playwright (`@playwright/test`) + Chromium
+- spec 위치: `e2e/visual/*.spec.ts`
+- 베이스라인: `e2e/visual/__screenshots__/` (CI Linux 환경 단일)
+- 머지 후 archive: `e2e/visual/__diff_archive__/pr-N/` (시각 변화 history)
+- 워크플로우 2개:
+  - `.github/workflows/visual-regression.yml` — compare/accept 모드 + 인라인 이미지 코멘트
+  - `.github/workflows/archive-vr-diffs.yml` — 머지 시 시각 변화 영구 보존
 
-해당 프로젝트는 GitHub Actions 시각 회귀 워크플로우를 11회 진화로 안정화한 사례. 본 프로젝트도 동일 패턴을 단순화해 미러링한다.
+**머지 차단 흐름**:
+1. PR 생성 → compare 모드 실행
+2. 베이스라인 diff 또는 신규 라우트 → fail → PR 코멘트에 **expected/actual/diff PNG 표** 자동 표시
+3. 사용자가 시각 검토 후 의도된 변경이면 **`accept-baseline`** 라벨 부여
+4. accept 모드로 재실행 → `playwright test --update-snapshots` → 베이스라인 PNG commit + push to PR branch + status 직접 등록
+5. 다음 compare 통과 → 머지 가능
+6. 머지 후 `archive-vr-diffs` 가 시각 변화 PNG 를 main 의 `__diff_archive__/pr-N/` 으로 영구 보존
 
-**도입 절차**:
-1. sibling 프로젝트의 VR 셋업(Storybook + Playwright/Chromatic-like + GH Actions) Read로 구조 파악
-2. 본 프로젝트(단일 패키지·1인용) 맥락에 맞게 축소
-3. `feature/visual-regression-setup` 단독 PR로 도입
-4. 이후 모든 UI 변경 PR에서 자동 VR 트리거
+**핵심 룰**:
+- 베이스라인은 **CI Linux 단일 환경** — 로컬 macOS 캡처본은 commit 금지
+- 라벨은 **사용자가 PR 검토 후 직접 부여** — 자동 부트스트랩 없음 (의도된 변경 검증)
+- 새 라우트 추가 시 `routes.spec.ts` 에 test 추가만 하고 PR push — 라벨 부여로 첫 베이스라인 등록
+
+자세한 사용법은 `e2e/visual/README.md` 참고.
 
 ---
 
