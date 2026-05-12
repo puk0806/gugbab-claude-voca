@@ -1,0 +1,121 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.card {
+  width: 100%;
+  min-height: 280px;
+  border-radius: 16px;
+  background: var(--gugbab-color-bg-surface);
+  border: 1px solid var(--gugbab-color-border-base);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--gugbab-color-border-focus);
+  outline-offset: 2px;
+}
+
+.face {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.english {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--gugbab-color-fg-primary);
+  word-break: break-word;
+}
+
+.korean {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--gugbab-color-fg-primary);
+}
+
+.pos {
+  font-size: 13px;
+  color: var(--gugbab-color-fg-muted);
+}
+
+.hint {
+  position: absolute;
+  bottom: 12px;
+  font-size: 12px;
+  color: var(--gugbab-color-fg-muted);
+}
+
+.ttsButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-elevated);
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ttsButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action {
+  flex: 1;
+  padding: 14px 0;
+  border-radius: 12px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.flip {
+  background: var(--gugbab-color-accent-base);
+  color: var(--gugbab-color-accent-fg);
+  border-color: transparent;
+}
+
+.again {
+  background: var(--gugbab-color-danger-subtle);
+  color: var(--gugbab-color-danger-base);
+  border-color: var(--gugbab-color-danger-base);
+}
+
+.good {
+  background: var(--gugbab-color-success-subtle);
+  color: var(--gugbab-color-success-base);
+  border-color: var(--gugbab-color-success-base);
+}

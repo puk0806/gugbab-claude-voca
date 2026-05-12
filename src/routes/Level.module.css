@@ -1,0 +1,59 @@
+.heading {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.subheading {
+  font-size: 14px;
+  color: var(--gugbab-color-fg-secondary);
+  margin: 0 0 24px;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  padding: 32px 20px;
+  border-radius: 16px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transition: all 120ms;
+}
+
+.tile:hover:not(:disabled) {
+  border-color: var(--gugbab-color-accent-base);
+  transform: translateY(-2px);
+}
+
+.tile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tileTitle {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.tileCount {
+  font-size: 14px;
+  color: var(--gugbab-color-fg-secondary);
+}
+
+.tileEmpty {
+  font-size: 12px;
+  color: var(--gugbab-color-fg-muted);
+  font-style: italic;
+}
