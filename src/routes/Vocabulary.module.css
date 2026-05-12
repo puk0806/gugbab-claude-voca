@@ -1,0 +1,102 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heading {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.subheading {
+  font-size: 13px;
+  color: var(--gugbab-color-fg-secondary);
+  margin: 0 0 16px;
+}
+
+.search {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  font-size: 15px;
+}
+
+.search:focus-visible {
+  outline: 2px solid var(--gugbab-color-border-focus);
+  border-color: var(--gugbab-color-accent-base);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--gugbab-color-border-subtle);
+  background: var(--gugbab-color-bg-surface);
+}
+
+.itemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itemEnglish {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gugbab-color-fg-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemKorean {
+  font-size: 13px;
+  color: var(--gugbab-color-fg-secondary);
+}
+
+.markToggle {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.markBtn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.markBtn.known {
+  background: var(--gugbab-color-success-subtle);
+  border-color: var(--gugbab-color-success-base);
+  color: var(--gugbab-color-success-base);
+}
+
+.markBtn.unknown {
+  background: var(--gugbab-color-danger-subtle);
+  border-color: var(--gugbab-color-danger-base);
+  color: var(--gugbab-color-danger-base);
+}
+
+.markBtn.active {
+  font-weight: 700;
+}
