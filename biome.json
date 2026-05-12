@@ -9,7 +9,10 @@
       "!**/node_modules",
       "!pnpm-lock.yaml",
       "!**/.claude",
-      "!docs/design/scenarios.html"
+      "!docs/design/scenarios.html",
+      "!e2e/visual/__screenshots__",
+      "!playwright-report",
+      "!test-results"
     ]
   },
   "linter": {
