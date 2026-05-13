@@ -25,8 +25,9 @@
 | 1 | 아키텍처 설계 (`frontend-architect`) | ✅ 완료 — `docs/architecture/gugbab-voca-architecture.md` |
 | 2 | 스캐폴딩 + 순수 로직 (Vite·Biome·Vitest / SRS·DB·콘텐츠 로더·큐) | ✅ 완료 (PR #4·#5) |
 | 3 | 시각 회귀(VR) 인프라 — Playwright + GH Actions 라벨 기반 베이스라인 승인 | ✅ 완료 (PR #6) |
-| 4 | 핵심 UI (라우팅·4모드 학습·단어장) + A1 콘텐츠 시드 — VR 첫 베이스라인 등록 | ⏳ 진행 중 |
-| 5 | 보강 UI (세션 종료 요약·통계·설정·P1) | — |
+| 4 | 핵심 UI (라우팅·4모드 학습·단어장) + A1 콘텐츠 시드 — VR 첫 베이스라인 등록 | ✅ 완료 (PR #7) |
+| 5-1 | A1 콘텐츠 확장 (단어 80→648 / 문장 40→150) + 다의어 `secondaryKorean` 스키마 + deep-researcher 교차 검증 | ✅ 완료 (`feature/phase-5-content-expansion`) |
+| 5-2 | 보강 UI (세션 종료 요약·통계·설정·P1) | — |
 | 6 | PWA + Vercel 배포 | — |
 | 7 | P2 보강 (export/import·다크모드 등) | — |
 
