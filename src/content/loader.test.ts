@@ -22,11 +22,11 @@ const SAMPLE_SENTENCES = [
 ];
 
 const SAMPLE_MANIFEST = {
-  buildAt: '2026-05-10T00:00:00Z',
+  buildAt: '2026-05-13T00:00:00Z',
   schemaVersion: 1 as const,
   counts: {
-    words: { A1: 80, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
-    sentences: { A1: 40, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
+    words: { A1: 648, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
+    sentences: { A1: 150, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
   },
 };
 
@@ -135,7 +135,7 @@ describe('content/loader', () => {
 
       const manifest = await loadManifest();
       expect(manifest.schemaVersion).toBe(1);
-      expect(manifest.counts.words.A1).toBe(80);
+      expect(manifest.counts.words.A1).toBe(648);
       await loadManifest();
       expect(fetchSpy).toHaveBeenCalledOnce();
     });

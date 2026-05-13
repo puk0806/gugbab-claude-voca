@@ -10,11 +10,11 @@ import { vi } from 'vitest';
 import type { RouteObject } from 'react-router-dom';
 
 export const MANIFEST_A1_ONLY = {
-  buildAt: '2026-05-11T00:00:00Z',
+  buildAt: '2026-05-13T00:00:00Z',
   schemaVersion: 1,
   counts: {
-    words: { A1: 80, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
-    sentences: { A1: 40, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
+    words: { A1: 648, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
+    sentences: { A1: 150, A2: 0, B1: 0, B2: 0, C1: 0, C2: 0 },
   },
 };
 
