@@ -13,10 +13,11 @@
 | 플랫폼 | 웹/PWA만 (모바일 네이티브 X) |
 | 백엔드 | 없음. 정적 호스팅 (Vercel/Netlify) |
 | 인증 | 없음. 단일 디바이스 로컬 사용 |
-| 콘텐츠 추가 | Claude로 정적 JSON 갱신 |
-| 레벨 | CEFR 6단계 (A1~C2) |
+| 콘텐츠 추가 | Claude 큐레이션 후 정적 JSON 갱신 (단어 + 문장 + manifest) |
+| 다의어 표시 | `secondaryKorean` 옵셔널 (회화 빈도 상위 2번째 의미) |
+| 레벨 | CEFR 6단계 (A1~C2) — A1 시드 648 단어 / 150 문장 완료 |
 | 인터랙션 | 플래시카드 뒤집기 + 자가체크 |
-| SRS | 도입 (알고리즘 미결: SM-2 vs FSRS) |
+| SRS | SM-2 직접 구현 |
 | 진도 저장 | IndexedDB (Dexie.js) |
 | TTS | Web Speech API (`speechSynthesis`) |
 | UI | `@gugbab-ui/styled-mui` (별도 npm 패키지) |
@@ -92,8 +93,13 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 
 ### 콘텐츠 갱신
 
-- Claude에 CEFR 가이드 기반 단어·문장 JSON 생성 요청
-- `public/content/{level}.json` 갱신 후 빌드·배포
+- Claude에 CEFR 가이드 + 회화 빈도 4종 자료(NGSL-Spoken·Cambridge A1 Movers·Oxford 3000 A1·EVP) 기반 단어·문장 생성 요청
+- 산출물 3종 동시 갱신:
+  - `public/data/words/{cefr}.json` — `WordEntry` (id·level·english·korean·secondaryKorean?·partOfSpeech·tags?)
+  - `public/data/sentences/{cefr}.json` — `SentenceEntry` (cloze 정답은 단어장 어휘로 정합)
+  - `public/data/manifest.json` — `counts.words[cefr]` / `counts.sentences[cefr]` 갱신
+- ID 불변 원칙: 제거된 단어 ID는 영구 결번, 신규는 최대 ID + 1 부여 (SRS 진도 데이터 무결성)
+- 큐레이션 가이드 + 검증 보고서: `docs/research/2026-05-12-a1-content-curation.md`, `docs/research/2026-05-13-a1-vocabulary-validation.md`
 
 ---
 
@@ -116,3 +122,4 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 | 날짜 | 변경 내용 요약 |
 |---|---|
 | 2026-05-08 | gugbab-voca 정렬 정리: 스킬 74개·에이전트 14개·규칙 2개(rust/java) 제거. 신규 스킬 3종(`web-speech-api-tts`/`srs-spaced-repetition`/`indexeddb-dexie`) 도입. README 신규 작성 |
+| 2026-05-13 | Phase 5-1 콘텐츠 확장 완료: A1 단어 80→648 / 문장 40→150. `WordEntry.secondaryKorean` 다의어 스키마 도입(8개 단어). deep-researcher 4종 자료(NGSL-Spoken·Cambridge A1 Movers·Oxford 3000 A1·EVP) 교차 검증 후 EVP B1 단어 3개 제거 + 외국 회화 핵심 갭(공항·호텔·돈·일상동사·connector) 25개 보강. 문장 cloze 정합성 100% 달성. `docs/research/` 큐레이션·검증 보고서 2종 추가 |

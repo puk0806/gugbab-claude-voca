@@ -39,7 +39,10 @@ export interface WordEntry {
   readonly id: string;
   readonly level: CEFR;
   readonly english: string;
+  /** 메인 한국어 뜻 — 학습자가 즉시 떠올릴 자연스러운 표현 1개 */
   readonly korean: string;
+  /** 다의어 보조 뜻 — 회화 빈도가 함께 높을 때만 (단일 뜻이면 생략) */
+  readonly secondaryKorean?: string;
   readonly partOfSpeech: PartOfSpeech;
   readonly ipa?: string;
   readonly examples?: readonly WordExample[];
