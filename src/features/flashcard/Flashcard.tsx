@@ -97,7 +97,14 @@ export function Flashcard({
         )}
         <div className={styles.face}>
           {flipped ? (
-            <div className={styles.korean}>{card.korean}</div>
+            <>
+              <div className={styles.korean}>{card.korean}</div>
+              {cardType === 'word' && (card as WordEntry).secondaryKorean && (
+                <div className={styles.secondaryKorean}>
+                  {(card as WordEntry).secondaryKorean}
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className={styles.english}>{englishDisplay}</div>

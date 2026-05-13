@@ -46,6 +46,12 @@ function getDisplayEnglish(card: WordEntry | SentenceEntry, cardType: CardType):
   return cardType === 'sentence' ? fillCloze((card as SentenceEntry).english) : card.english;
 }
 
+function getDisplayKorean(card: WordEntry | SentenceEntry, cardType: CardType): string {
+  if (cardType !== 'word') return card.korean;
+  const word = card as WordEntry;
+  return word.secondaryKorean ? `${word.korean} / ${word.secondaryKorean}` : word.korean;
+}
+
 export function Vocabulary() {
   const { level, cardType, cards, initialMarks } = useLoaderData() as VocabularyLoaderData;
   const [marks, setMarks] = useState<Record<string, 'known' | 'unknown'>>(initialMarks);
@@ -56,7 +62,7 @@ export function Vocabulary() {
     if (!q) return cards;
     return cards.filter((c) => {
       const english = getDisplayEnglish(c, cardType).toLowerCase();
-      const korean = c.korean.toLowerCase();
+      const korean = getDisplayKorean(c, cardType).toLowerCase();
       return english.includes(q) || korean.includes(q);
     });
   }, [cards, query, cardType]);
@@ -110,7 +116,7 @@ export function Vocabulary() {
             <li key={card.id} className={styles.item}>
               <div className={styles.itemMain}>
                 <span className={styles.itemEnglish}>{display}</span>
-                <span className={styles.itemKorean}>{card.korean}</span>
+                <span className={styles.itemKorean}>{getDisplayKorean(card, cardType)}</span>
               </div>
               <div className={styles.markToggle}>
                 <button
