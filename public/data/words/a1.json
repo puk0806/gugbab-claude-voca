@@ -646,5 +646,6 @@
   { "id": "w_a1_670", "level": "A1", "english": "spicy", "korean": "매운", "partOfSpeech": "adjective", "tags": ["taste"] },
   { "id": "w_a1_671", "level": "A1", "english": "lost", "korean": "길을 잃은", "partOfSpeech": "adjective", "tags": ["state"] },
   { "id": "w_a1_672", "level": "A1", "english": "email", "korean": "이메일", "partOfSpeech": "noun", "tags": ["tech"] },
-  { "id": "w_a1_673", "level": "A1", "english": "job", "korean": "직업", "partOfSpeech": "noun", "tags": ["personal"] }
+  { "id": "w_a1_673", "level": "A1", "english": "job", "korean": "직업", "partOfSpeech": "noun", "tags": ["personal"] },
+  { "id": "w_a1_674", "level": "A1", "english": "admit", "korean": "인정하다", "partOfSpeech": "verb", "tags": ["action"] }
 ]

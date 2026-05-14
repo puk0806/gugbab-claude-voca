@@ -4,6 +4,7 @@ import { db, resetDb } from '../schema';
 import {
   countDue,
   getAllProgressByCardId,
+  getAllProgressByLevel,
   getDueCards,
   getNewProgress,
   getProgress,
@@ -128,6 +129,33 @@ describe('progressRepo', () => {
       const all = await getAllProgressByCardId('w_a1_001');
       expect(all).toHaveLength(2);
       expect(all.map((c) => c.studyMode).sort()).toEqual(['flashcard', 'recall']);
+    });
+  });
+
+  describe('getAllProgressByLevel (단어장 학습 우선순위 정렬용)', () => {
+    it('cardType + level 일치하는 모든 mode progress 반환', async () => {
+      await upsertProgress(makeCard({ cardId: 'a', studyMode: 'flashcard', level: 'A1' }));
+      await upsertProgress(makeCard({ cardId: 'a', studyMode: 'recall', level: 'A1' }));
+      await upsertProgress(makeCard({ cardId: 'b', studyMode: 'cloze', cardType: 'sentence', level: 'A1' }));
+      const wordA1 = await getAllProgressByLevel('word', 'A1');
+      expect(wordA1).toHaveLength(2);
+      expect(wordA1.map((c) => c.studyMode).sort()).toEqual(['flashcard', 'recall']);
+    });
+
+    it('level이 다르면 제외', async () => {
+      await upsertProgress(makeCard({ cardId: 'a', level: 'A1' }));
+      await upsertProgress(makeCard({ cardId: 'b', level: 'A2' }));
+      const a1 = await getAllProgressByLevel('word', 'A1');
+      expect(a1).toHaveLength(1);
+      expect(a1[0]?.cardId).toBe('a');
+    });
+
+    it('cardType이 다르면 제외', async () => {
+      await upsertProgress(makeCard({ cardId: 'w_a1_001', cardType: 'word' }));
+      await upsertProgress(makeCard({ cardId: 's_a1_001', cardType: 'sentence' }));
+      const words = await getAllProgressByLevel('word', 'A1');
+      expect(words).toHaveLength(1);
+      expect(words[0]?.cardId).toBe('w_a1_001');
     });
   });
 });
