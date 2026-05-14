@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gugbab/styled-mui':
-        specifier: ^1.0.0
-        version: 1.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        specifier: ^1.0.1
+        version: 1.0.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@gugbab/tokens':
         specifier: ^1.0.0
         version: 1.0.0
@@ -32,6 +32,9 @@ importers:
       react-router-dom:
         specifier: ^7
         version: 7.15.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      react-virtuoso:
+        specifier: ^4.18.7
+        version: 4.18.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       zustand:
         specifier: ^5.0.13
         version: 5.0.13(@types/react@19.2.14)(react@19.2.6)
@@ -451,22 +454,22 @@ packages:
     peerDependencies:
       '@biomejs/biome': '>=2.0.0'
 
-  '@gugbab/headless@1.0.0':
-    resolution: {integrity: sha512-Yl8kgL/7tQXz7gYNJ5vke/ZFN8pTBn6M9ahjfH0wlaJHgjD6dA3LMOZR404kWWknmhYGs7jM7g4IBxYATjnKHA==}
-    engines: {node: '>=20.17.0'}
+  '@gugbab/headless@1.0.1':
+    resolution: {integrity: sha512-roO18CCyUGJJBbl3RCX5t7nnpGgfakHuHRV/uet0To2U5NZ8wPz11Stb/svfngTWX2vX55GO11qUiv1bfNkIuA==}
+    engines: {node: '>=18.0.0'}
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
 
-  '@gugbab/hooks@1.0.0':
-    resolution: {integrity: sha512-p7o8Y5kjdLOkUjoK/0W4sm5CGKyNVe4LaFe7qPollsq7yUw8GZevVADhF7Z0aGZ1/Tmn2kwYlby/9Pw+vVDaSg==}
-    engines: {node: '>=20.17.0'}
+  '@gugbab/hooks@1.0.1':
+    resolution: {integrity: sha512-BK21vtdpfeMXL0Pd7veR8bpdm4BkOXdqkNUMBq4Bx91z5c17/BvcN8ODyBEzqjCn+jnVy8Fgx4FS5+80c4bwpg==}
+    engines: {node: '>=18.0.0'}
     peerDependencies:
       react: '>=18'
 
-  '@gugbab/styled-mui@1.0.0':
-    resolution: {integrity: sha512-NeCXIJXPfGzhEiD5kXbASHTcX3MJzNWhrvyYpxLMdWFyUTnrGejU6cVifdmLA0uaqFYif/AjmiQ24vVMXBigNw==}
-    engines: {node: '>=20.17.0'}
+  '@gugbab/styled-mui@1.0.1':
+    resolution: {integrity: sha512-xIp+cwmio6+db5UKvAxfoThkuQEZH6KE9eCD5u+Ek99PZqdV3nBvdCDlJO9L0PY5e3fvRjYY0F2KROfUleTuRQ==}
+    engines: {node: '>=18.0.0'}
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
@@ -475,9 +478,9 @@ packages:
     resolution: {integrity: sha512-IGpUNHDl4QkGxS2TV1/WVPUwMGumtS9jemthxdbu0mOeEBezQpv2BguIUEHkMI0BcO/xuIcRs0k4U6CbZr/hlw==}
     engines: {node: '>=20.17.0'}
 
-  '@gugbab/utils@1.0.0':
-    resolution: {integrity: sha512-4681BLDW2623N3fS/FAxQuZtmDyDFGdAiXp6dq4/zyOfMrU65MJjqK0F2pBx/bYi5kOyRKCj9ZiFmh1wt1sG9Q==}
-    engines: {node: '>=20.17.0'}
+  '@gugbab/utils@1.0.1':
+    resolution: {integrity: sha512-yRYXHqXktj/9a4XwjEPN1R62hZjSghh6+qLJJUa1uLtitV8SNYlBYP9m9mlvGj/ZI/o6joBJQ3eqQcpck2WW5Q==}
+    engines: {node: '>=18.0.0'}
 
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
@@ -1186,6 +1189,12 @@ packages:
       react-dom:
         optional: true
 
+  react-virtuoso@4.18.7:
+    resolution: {integrity: sha512-xNF5zDGEEIMB7cKwcen/pLig0YDf6OnfFrVgKFa7sHPf9fRem0CaLshyObbBcP88jzn0enavL39EgplgdyT21g==}
+    peerDependencies:
+      react: '>=16 || >=17 || >= 18 || >= 19'
+      react-dom: '>=16 || >=17 || >= 18 || >=19'
+
   react@19.2.6:
     resolution: {integrity: sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==}
     engines: {node: '>=0.10.0'}
@@ -1784,29 +1793,30 @@ snapshots:
     dependencies:
       '@biomejs/biome': 2.4.15
 
-  '@gugbab/headless@1.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@gugbab/headless@1.0.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@floating-ui/react': 0.27.19(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@gugbab/hooks': 1.0.0(react@19.2.6)
-      '@gugbab/utils': 1.0.0
+      '@gugbab/hooks': 1.0.1(react@19.2.6)
+      '@gugbab/utils': 1.0.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  '@gugbab/hooks@1.0.0(react@19.2.6)':
+  '@gugbab/hooks@1.0.1(react@19.2.6)':
     dependencies:
-      '@gugbab/utils': 1.0.0
+      '@gugbab/utils': 1.0.1
       react: 19.2.6
 
-  '@gugbab/styled-mui@1.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+  '@gugbab/styled-mui@1.0.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
-      '@gugbab/headless': 1.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@gugbab/headless': 1.0.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@gugbab/tokens': 1.0.0
+      '@gugbab/utils': 1.0.1
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
   '@gugbab/tokens@1.0.0': {}
 
-  '@gugbab/utils@1.0.0': {}
+  '@gugbab/utils@1.0.1': {}
 
   '@isaacs/cliui@8.0.2':
     dependencies:
@@ -2475,6 +2485,11 @@ snapshots:
       react: 19.2.6
       set-cookie-parser: 2.7.2
     optionalDependencies:
+      react-dom: 19.2.6(react@19.2.6)
+
+  react-virtuoso@4.18.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+    dependencies:
+      react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
   react@19.2.6: {}

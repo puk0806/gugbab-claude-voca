@@ -28,7 +28,7 @@
     "test:visual:report": "playwright show-report"
   },
   "dependencies": {
-    "@gugbab/styled-mui": "^1.0.0",
+    "@gugbab/styled-mui": "^1.0.1",
     "@gugbab/tokens": "^1.0.0",
     "clsx": "^2.1.1",
     "dexie": "^4.4.2",
@@ -36,6 +36,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7",
+    "react-virtuoso": "^4.18.7",
     "zustand": "^5.0.13"
   },
   "devDependencies": {
