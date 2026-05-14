@@ -82,3 +82,21 @@ export async function countDue(
 export async function getAllProgressByCardId(cardId: string): Promise<SrsCard[]> {
   return await db.cardProgress.where('cardId').equals(cardId).toArray();
 }
+
+/**
+ * `(cardType, level)` 범위의 전체 progress 일괄 조회.
+ * 모든 studyMode 합쳐서 반환 — 단어장 학습 우선순위 정렬 입력으로 사용.
+ *
+ * Dexie `cardType` 인덱스 조회 후 `level` in-memory 필터.
+ * A1 600개 × 최대 3 mode = 1800 row 한도라 일괄 fetch 비용 무시할 수준.
+ */
+export async function getAllProgressByLevel(
+  cardType: CardType,
+  level: CEFR,
+): Promise<SrsCard[]> {
+  return await db.cardProgress
+    .where('cardType')
+    .equals(cardType)
+    .filter((c) => c.level === level)
+    .toArray();
+}

@@ -18,6 +18,7 @@ export {
 export {
   countDue,
   getAllProgressByCardId,
+  getAllProgressByLevel,
   getDueCards,
   getNewProgress,
   getProgress,
