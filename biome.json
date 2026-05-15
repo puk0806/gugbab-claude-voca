@@ -10,6 +10,8 @@
       "!pnpm-lock.yaml",
       "!**/.claude",
       "!docs/design/scenarios.html",
+      "!docs/design/logo-drafts",
+      "!docs/design/phase-6-pwa-spec.html",
       "!e2e/visual/__screenshots__",
       "!playwright-report",
       "!test-results"

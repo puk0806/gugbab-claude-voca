@@ -20,6 +20,7 @@ export async function registerServiceWorker(): Promise<void> {
     registerSW({
       immediate: true,
       onRegisteredSW(swUrl) {
+        // biome-ignore lint/suspicious/noConsole: SW lifecycle 진단 로그
         console.info('[pwa] SW registered:', swUrl);
       },
       onRegisterError(error) {
