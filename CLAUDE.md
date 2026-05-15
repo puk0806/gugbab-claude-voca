@@ -26,10 +26,11 @@
 | 2 | 스캐폴딩 + 순수 로직 (Vite·Biome·Vitest / SRS·DB·콘텐츠 로더·큐) | ✅ 완료 (PR #4·#5) |
 | 3 | 시각 회귀(VR) 인프라 — Playwright + GH Actions 라벨 기반 베이스라인 승인 | ✅ 완료 (PR #6) |
 | 4 | 핵심 UI (라우팅·4모드 학습·단어장) + A1 콘텐츠 시드 — VR 첫 베이스라인 등록 | ✅ 완료 (PR #7) |
-| 5-1 | A1 콘텐츠 확장 (단어 80→648 / 문장 40→150) + 다의어 `secondaryKorean` 스키마 + deep-researcher 교차 검증 | ✅ 완료 (`feature/phase-5-content-expansion`) |
-| 5-2 | 보강 UI (세션 종료 요약·통계·설정·P1) | — |
-| 6 | PWA + Vercel 배포 | — |
-| 7 | P2 보강 (export/import·다크모드 등) | — |
+| 5-1 | A1 콘텐츠 확장 (단어 80→648 / 문장 40→150) + 다의어 `secondaryKorean` 스키마 + deep-researcher 교차 검증 | ✅ 완료 (PR #8) |
+| 5-2 | 단어장 학습 대시보드 (학습 점수 정렬·6단계 chip 필터·무한 스크롤·virtuoso 가상화) + A1 formulaic pattern 100문장 보강 (649/250) | ✅ 완료 (PR #9) |
+| 5-3 | 보강 UI (세션 종료 요약·통계·설정) | 건너뜀 — P2로 |
+| 6 | PWA + Vercel 배포 (vite-plugin-pwa · 아이콘 · vercel.json · 사용자 Vercel 가입) | ✅ 완료 (`feature/phase-6-pwa-deployment`) |
+| 7 | P2 보강 (install prompt · Offline 배지 · 콘텐츠 갱신 알림 · 다크모드 · export/import 등) | — |
 
 Phase 진입·완료 시 이 표를 업데이트한다.
 

@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="m3-fill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Material 3 Expressive cookie/scallop 8-lobe shape -->
+  <!-- center cross + corners union으로 cookie 형태 시뮬레이션 -->
+  <g transform="translate(256 256)" fill="url(#m3-fill)">
+    <!-- 본체 (rounded square) -->
+    <rect x="-180" y="-180" width="360" height="360" rx="80"/>
+    <!-- 4 corner bumps -->
+    <circle cx="-150" cy="-150" r="80"/>
+    <circle cx="150" cy="-150" r="80"/>
+    <circle cx="150" cy="150" r="80"/>
+    <circle cx="-150" cy="150" r="80"/>
+    <!-- 4 edge bumps -->
+    <circle cx="0" cy="-210" r="56"/>
+    <circle cx="210" cy="0" r="56"/>
+    <circle cx="0" cy="210" r="56"/>
+    <circle cx="-210" cy="0" r="56"/>
+  </g>
+
+  <!-- 글자 -->
+  <text x="256" y="368" font-family="system-ui, -apple-system, 'Google Sans', Roboto, sans-serif"
+        font-size="320" font-weight="800" fill="white"
+        text-anchor="middle" letter-spacing="-12">g</text>
+</svg>
