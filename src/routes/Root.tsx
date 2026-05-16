@@ -5,6 +5,7 @@
  * errorElement는 RouteError.
  */
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { InstallButton } from '@/features/install/InstallButton';
 import styles from './Root.module.css';
 
 export function Root() {
@@ -27,9 +28,14 @@ export function Root() {
             ← 뒤로
           </button>
         )}
-        <Link to="/" className={styles.title} aria-label="홈으로">
-          {isHome ? '' : 'gugbab-voca'}
-        </Link>
+        <div className={styles.headerRight}>
+          {!isHome && (
+            <Link to="/" className={styles.title} aria-label="홈으로">
+              gugbab-voca
+            </Link>
+          )}
+          <InstallButton />
+        </div>
       </header>
       <main className={styles.main}>
         <Outlet />
@@ -45,6 +51,7 @@ export function RouteError() {
         <Link to="/" className={styles.title}>
           gugbab-voca
         </Link>
+        <InstallButton />
       </header>
       <main className={styles.main}>
         <div className={styles.error}>
