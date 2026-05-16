@@ -15,7 +15,7 @@
 | 인증 | 없음. 단일 디바이스 로컬 사용 |
 | 콘텐츠 추가 | Claude 큐레이션 후 정적 JSON 갱신 (단어 + 문장 + manifest) |
 | 다의어 표시 | `secondaryKorean` 옵셔널 (회화 빈도 상위 2번째 의미) |
-| 레벨 | CEFR 6단계 (A1~C2) — A1 시드 649 단어 / 250 문장 완료 |
+| 레벨 | CEFR 6단계 (A1~C2) — 전 레벨 완료 (총 2,987 단어 / 1,150 문장) |
 | 인터랙션 | 플래시카드 뒤집기 + 자가체크 |
 | SRS | SM-2 직접 구현 |
 | 진도 저장 | IndexedDB (Dexie.js) |
@@ -127,3 +127,4 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 | 2026-05-13 | Phase 5-1 콘텐츠 확장 완료: A1 단어 80→648 / 문장 40→150. `WordEntry.secondaryKorean` 다의어 스키마 도입(8개 단어). deep-researcher 4종 자료(NGSL-Spoken·Cambridge A1 Movers·Oxford 3000 A1·EVP) 교차 검증 후 EVP B1 단어 3개 제거 + 외국 회화 핵심 갭(공항·호텔·돈·일상동사·connector) 25개 보강. 문장 cloze 정합성 100% 달성. `docs/research/` 큐레이션·검증 보고서 2종 추가 |
 | 2026-05-14 | Phase 5-2 단어장 학습 대시보드 완료: 학습 점수 정렬·6단계 chip 필터·IntersectionObserver 무한 스크롤·react-virtuoso 가상화. A1 formulaic pattern 100문장 보강 (단어 649 / 문장 250) |
 | 2026-05-15 | **Phase 6 PWA + Vercel 배포 완료**: vite-plugin-pwa(Workbox autoUpdate) 도입, manifest·SW·아이콘 자산 5종(Soft 3D Gummi 채택), index.html 메타 보강(favicon·apple-touch-icon·theme-color·OG), vercel.json(SPA fallback + 캐시 헤더). 사용자 Vercel 가입·repo import → 자동 배포 흐름. SW 등록 helper(pwa.ts) + 단위 테스트 + E2E 메타/manifest 검증 |
+| 2026-05-16 | **Phase 7 A2~C2 콘텐츠 확장 완료**: 신규 2,338단어 + 900문장 (A2 518/200, B1 500/200, B2 502/200, C1 407/150, C2 411/150). 4종 자료(NGSL-Spoken·Cambridge EVP·Oxford 3000/5000·EVP) 교차 검증. cloze 정합성 자동 검증 vitest test 도입(누적 lemma 풀, 활용형·기능어·불규칙 화이트리스트 — 6/6 PASS). 5개 레벨 검증 보고서. 출처 답습 흔적 0건 |
