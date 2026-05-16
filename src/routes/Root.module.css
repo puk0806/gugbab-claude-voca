@@ -23,6 +23,12 @@
   text-decoration: none;
 }
 
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .back {
   font-size: 14px;
   color: var(--gugbab-color-accent-base);
