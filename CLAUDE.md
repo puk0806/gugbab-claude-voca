@@ -29,8 +29,9 @@
 | 5-1 | A1 콘텐츠 확장 (단어 80→648 / 문장 40→150) + 다의어 `secondaryKorean` 스키마 + deep-researcher 교차 검증 | ✅ 완료 (PR #8) |
 | 5-2 | 단어장 학습 대시보드 (학습 점수 정렬·6단계 chip 필터·무한 스크롤·virtuoso 가상화) + A1 formulaic pattern 100문장 보강 (649/250) | ✅ 완료 (PR #9) |
 | 5-3 | 보강 UI (세션 종료 요약·통계·설정) | 건너뜀 — P2로 |
-| 6 | PWA + Vercel 배포 (vite-plugin-pwa · 아이콘 · vercel.json · 사용자 Vercel 가입) | ✅ 완료 (`feature/phase-6-pwa-deployment`) |
-| 7 | P2 보강 (install prompt · Offline 배지 · 콘텐츠 갱신 알림 · 다크모드 · export/import 등) | — |
+| 6 | PWA + Vercel 배포 (vite-plugin-pwa · 아이콘 · vercel.json · 사용자 Vercel 가입) | ✅ 완료 (PR #10) |
+| 7 | A2~C2 콘텐츠 확장 (신규 2,338단어 + 900문장 · cloze 정합성 자동 검증 vitest test) | ✅ 완료 (`feature/phase-7-content-a2-c2`) |
+| 8 | P2 보강 (install prompt · Offline 배지 · 콘텐츠 갱신 알림 · 다크모드 · export/import 등) | — |
 
 Phase 진입·완료 시 이 표를 업데이트한다.
 
