@@ -1,0 +1,97 @@
+.item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--gugbab-color-border-subtle);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itemEnglish {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gugbab-color-fg-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemKorean {
+  font-size: 13px;
+  color: var(--gugbab-color-fg-secondary);
+}
+
+.itemMeta {
+  font-size: 11px;
+  color: var(--gugbab-color-fg-muted);
+  margin-top: 2px;
+}
+
+.markToggle {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.markBtn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.markBtn.known {
+  background: var(--gugbab-color-success-subtle);
+  border-color: var(--gugbab-color-success-base);
+  color: var(--gugbab-color-success-base);
+}
+
+.markBtn.unknown {
+  background: var(--gugbab-color-danger-subtle);
+  border-color: var(--gugbab-color-danger-base);
+  color: var(--gugbab-color-danger-base);
+}
+
+.markBtn.active {
+  font-weight: 700;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: 0 0 8px;
+}
+
+.dot-unknown {
+  background: #ef4444;
+}
+.dot-review-due {
+  background: #f97316;
+}
+.dot-learning {
+  background: #eab308;
+}
+.dot-new {
+  background: var(--gugbab-color-fg-muted, #9ca3af);
+}
+.dot-completed {
+  background: #3b82f6;
+}
+.dot-known {
+  background: #10b981;
+}
