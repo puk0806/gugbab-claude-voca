@@ -1,19 +1,22 @@
 /**
  * 홈 화면 (`/`) — CEFR 6단계 레벨 카드.
  *
- * loader는 manifest.json + 모든 레벨/cardType의 due 카운트 집계.
+ * loader는 manifest.json + 각 레벨/cardType의 progress 집계.
  * 콘텐츠 0인 레벨은 disabled (콘텐츠 준비 중).
  */
 import { useLoaderData, useNavigate } from 'react-router-dom';
 import { loadManifest } from '@/content';
+import { getProgressSummary } from '@/db';
 import { LevelCard } from '@/shared/components';
-import { CEFR_LEVELS, type CEFR } from '@/shared/types';
+import { type CEFR, CEFR_LEVELS } from '@/shared/types';
 import styles from './Home.module.css';
 
 interface LevelSummary {
   readonly level: CEFR;
   readonly wordCount: number;
   readonly sentenceCount: number;
+  readonly learnedCount: number;
+  readonly dueCount: number;
 }
 
 interface HomeLoaderData {
@@ -31,11 +34,24 @@ const LEVEL_SUBTITLE: Record<CEFR, string> = {
 
 export async function homeLoader(): Promise<HomeLoaderData> {
   const manifest = await loadManifest();
-  const summaries: LevelSummary[] = CEFR_LEVELS.map((level) => ({
-    level,
-    wordCount: manifest.counts.words[level],
-    sentenceCount: manifest.counts.sentences[level],
-  }));
+  const now = Date.now();
+  const summaries: LevelSummary[] = await Promise.all(
+    CEFR_LEVELS.map(async (level) => {
+      const wordCount = manifest.counts.words[level];
+      const sentenceCount = manifest.counts.sentences[level];
+      const [w, s] = await Promise.all([
+        getProgressSummary('word', level, wordCount, now),
+        getProgressSummary('sentence', level, sentenceCount, now),
+      ]);
+      return {
+        level,
+        wordCount,
+        sentenceCount,
+        learnedCount: w.learned + s.learned,
+        dueCount: w.due + s.due,
+      };
+    }),
+  );
   return { summaries };
 }
 
@@ -57,8 +73,8 @@ export function Home() {
               level={s.level}
               subtitle={`${LEVEL_SUBTITLE[s.level]} · 단어 ${s.wordCount} · 문장 ${s.sentenceCount}`}
               totalCount={total}
-              learnedCount={0}
-              dueCount={0}
+              learnedCount={s.learnedCount}
+              dueCount={s.dueCount}
               disabled={disabled}
               onClick={() => navigate(`/level/${s.level}`)}
             />

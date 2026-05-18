@@ -1,12 +1,15 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { resetContentCache } from '@/content';
 import { MANIFEST_A1_ONLY, mockFetchByUrlSuffix, renderRoutes } from '@/__tests__/router-helpers';
+import { resetContentCache } from '@/content';
+import { upsertProgress } from '@/db';
+import { resetDb } from '@/db/schema';
 import { routes } from '@/router';
 
 describe('Home route (/)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     resetContentCache();
+    await resetDb();
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -27,5 +30,27 @@ describe('Home route (/)', () => {
     renderRoutes(routes, '/');
     await waitFor(() => screen.getByRole('heading', { name: /레벨을 선택하세요/ }));
     expect(screen.getAllByText('콘텐츠 준비 중')).toHaveLength(5);
+  });
+
+  it('A1에 due progress 1건 있으면 due 배지 표시', async () => {
+    const now = Date.now();
+    await upsertProgress({
+      cardId: 'w_a1_001',
+      studyMode: 'flashcard',
+      cardType: 'word',
+      level: 'A1',
+      state: 'learning',
+      repetitions: 1,
+      easeFactor: 2.5,
+      intervalDays: 1,
+      dueAt: now - 1000,
+      lastReviewedAt: now,
+      lapses: 0,
+      lastRating: 'good',
+    });
+    mockFetchByUrlSuffix({ '/data/manifest.json': MANIFEST_A1_ONLY });
+    renderRoutes(routes, '/');
+    await waitFor(() => screen.getByRole('heading', { name: /레벨을 선택하세요/ }));
+    expect(screen.getByLabelText(/오늘 복습 1장/)).toBeInTheDocument();
   });
 });
