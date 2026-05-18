@@ -7,8 +7,8 @@
  */
 import { clsx } from 'clsx';
 import type { CEFR } from '@/shared/types';
-import { ProgressBar } from './ProgressBar';
 import styles from './LevelCard.module.css';
+import { ProgressBar } from './ProgressBar';
 
 interface LevelCardProps {
   readonly level: CEFR;
@@ -43,16 +43,21 @@ export function LevelCard({
       {disabled ? (
         <div className={styles.placeholder}>콘텐츠 준비 중</div>
       ) : (
-        <div className={styles.metrics}>
-          <div className={styles.progress}>
-            <ProgressBar value={ratio} ariaLabel={`${level} 진도`} />
+        <>
+          <div className={styles.learnedText}>
+            학습 {learnedCount} / {totalCount}
           </div>
-          {dueCount > 0 && (
-            <span className={styles.dueBadge} role="img" aria-label={`오늘 복습 ${dueCount}장`}>
-              due {dueCount}
-            </span>
-          )}
-        </div>
+          <div className={styles.metrics}>
+            <div className={styles.progress}>
+              <ProgressBar value={ratio} ariaLabel={`${level} 진도`} />
+            </div>
+            {dueCount > 0 && (
+              <span className={styles.dueBadge} role="img" aria-label={`오늘 복습 ${dueCount}장`}>
+                due {dueCount}
+              </span>
+            )}
+          </div>
+        </>
       )}
     </button>
   );

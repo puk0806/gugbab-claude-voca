@@ -3,14 +3,18 @@
  *
  * 흐름:
  *   한국어 표시 → 영어 입력 → 제출
- *   - 정답: 자동 진행 (good)
- *   - 오답: "다시 시도" / "정답 보기" 노출
- *     - "정답 보기" 탭 → 정답 노출 + again 처리
- *     - 3회 연속 오답 시 자동 정답보기 모드 (좌절 방지)
+ *   - 정답: "정답!" 피드백 + "다음 카드" 버튼 (사용자가 명시적으로 진행)
+ *   - 오답: "틀렸어요" 피드백 + "다시 시도" / "정답 보기"
+ *     - "다시 시도": 입력 재활성, 같은 카드 유지
+ *     - "정답 보기": 정답 노출 + "다음 카드" (advance는 사용자 클릭 시점)
+ *     - 3회 연속 오답 시 자동으로 정답보기 모드 진입 (좌절 방지, advance는 X)
+ *
+ * `onAnswer` 호출 시점은 항상 "다음 카드" 버튼 클릭 — 정답·오답·reveal 통합 처리.
+ * 이는 reveal 직후 카드가 advance되어 정답을 못 보는 버그를 방지한다.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fillCloze } from '@/content';
 import type { SentenceEntry, WordEntry } from '@/content';
+import { fillCloze } from '@/content';
 import type { SrsRating } from '@/shared/types';
 import { isCorrect } from '@/srs';
 import styles from './RecallPrompt.module.css';
@@ -54,20 +58,18 @@ export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
     const ok = isCorrect(input, expected);
     setSubmitted(true);
     setCorrect(ok);
-    if (ok) {
-      onAnswer('good');
-    } else {
+    if (!ok) {
       setAttempts((prev) => prev + 1);
     }
-  }, [input, expected, onAnswer]);
+  }, [input, expected]);
 
-  // 3회 연속 오답 시 자동으로 정답 보기 모드 진입 (좌절 방지)
+  // 3회 연속 오답 시 자동으로 정답 보기 모드 진입 (좌절 방지).
+  // onAnswer 호출은 사용자가 "다음 카드"를 누를 때까지 보류.
   useEffect(() => {
     if (attempts >= MAX_RETRIES_BEFORE_REVEAL && !revealed) {
       setRevealed(true);
-      onAnswer('again');
     }
-  }, [attempts, revealed, onAnswer]);
+  }, [attempts, revealed]);
 
   const handleRetry = useCallback(() => {
     setInput('');
@@ -78,14 +80,17 @@ export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
 
   const handleReveal = useCallback(() => {
     setRevealed(true);
-    onAnswer('again');
-  }, [onAnswer]);
+  }, []);
 
-  const inputCls = submitted
-    ? correct
-      ? styles.correct
-      : styles.incorrect
-    : '';
+  const handleNext = useCallback(() => {
+    // 정답이고 reveal 안 됐으면 'good', 그 외(오답·reveal)는 'again'.
+    const rating: SrsRating = correct === true && !revealed ? 'good' : 'again';
+    onAnswer(rating);
+  }, [correct, revealed, onAnswer]);
+
+  const inputCls = submitted ? (correct ? styles.correct : styles.incorrect) : '';
+  const showCorrectPath = submitted && correct === true;
+  const showWrongPath = submitted && correct === false && !revealed;
 
   return (
     <div className={styles.root}>
@@ -110,11 +115,22 @@ export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
           autoComplete="off"
           autoCorrect="off"
           spellCheck={false}
-          disabled={revealed}
+          disabled={submitted}
         />
 
+        {showCorrectPath && (
+          <div className={`${styles.feedback} ${styles.feedbackCorrect}`} role="status">
+            정답입니다!
+          </div>
+        )}
+        {showWrongPath && (
+          <div className={`${styles.feedback} ${styles.feedbackWrong}`} role="status">
+            틀렸어요. 다시 시도하거나 정답을 확인해 보세요.
+          </div>
+        )}
+
         {revealed && (
-          <div className={styles.reveal}>
+          <div className={styles.reveal} role="status">
             정답: <span className={styles.revealAnswer}>{expected}</span>
           </div>
         )}
@@ -131,7 +147,16 @@ export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
             제출
           </button>
         )}
-        {submitted && correct === false && !revealed && (
+        {showCorrectPath && (
+          <button
+            type="button"
+            className={`${styles.action} ${styles.primary}`}
+            onClick={handleNext}
+          >
+            다음 카드
+          </button>
+        )}
+        {showWrongPath && (
           <>
             <button
               type="button"
@@ -153,7 +178,7 @@ export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
           <button
             type="button"
             className={`${styles.action} ${styles.primary}`}
-            onClick={reset}
+            onClick={handleNext}
           >
             다음 카드
           </button>
