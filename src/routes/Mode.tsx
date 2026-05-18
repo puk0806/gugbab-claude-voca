@@ -4,20 +4,28 @@
  * cardType=word인 경우 클로즈 모드 비활성.
  * 단어장 선택 시 `/vocabulary/:cefr/:cardType`로 이동.
  * 그 외 학습 모드 선택 시 `/learn/:cefr/:cardType/:studyMode`로 이동.
+ *
+ * 각 타일에 studyMode별 학습 카드 수(cardId 단위 dedup) 라벨 표시.
  */
 import { type LoaderFunctionArgs, useLoaderData, useNavigate, useParams } from 'react-router-dom';
+import { getAllProgressByLevel } from '@/db';
 import {
   type CardType,
   type CEFR,
   isCardType,
   isCefr,
   STUDY_MODES_BY_CARD_TYPE,
+  type StudyMode,
 } from '@/shared/types';
 import styles from './Mode.module.css';
+
+type ModeKey = StudyMode | 'vocabulary';
 
 interface ModeLoaderData {
   readonly level: CEFR;
   readonly cardType: CardType;
+  readonly learnedByMode: Readonly<Record<StudyMode, number>>;
+  readonly learnedTotalCards: number;
 }
 
 export async function modeLoader({ params }: LoaderFunctionArgs): Promise<ModeLoaderData> {
@@ -29,10 +37,24 @@ export async function modeLoader({ params }: LoaderFunctionArgs): Promise<ModeLo
   if (!cardType || !isCardType(cardType)) {
     throw new Response('Invalid card type', { status: 404 });
   }
-  return { level: cefr, cardType };
+  const progress = await getAllProgressByLevel(cardType, cefr);
+  const byMode = new Map<StudyMode, Set<string>>();
+  const allCards = new Set<string>();
+  for (const p of progress) {
+    allCards.add(p.cardId);
+    const set = byMode.get(p.studyMode) ?? new Set<string>();
+    set.add(p.cardId);
+    byMode.set(p.studyMode, set);
+  }
+  const learnedByMode: Record<StudyMode, number> = {
+    flashcard: byMode.get('flashcard')?.size ?? 0,
+    recall: byMode.get('recall')?.size ?? 0,
+    cloze: byMode.get('cloze')?.size ?? 0,
+  };
+  return { level: cefr, cardType, learnedByMode, learnedTotalCards: allCards.size };
 }
 
-const MODE_LABEL: Record<string, { title: string; desc: string }> = {
+const MODE_LABEL: Record<ModeKey, { title: string; desc: string }> = {
   flashcard: { title: '플래시카드', desc: '영어 → 한국어 뒤집기. 자가체크' },
   recall: { title: '리콜 (한→영)', desc: '한국어 보고 영어 입력. 자동 채점' },
   cloze: { title: '클로즈 (빈칸)', desc: '문장 빈칸 채우기 (문장 전용)' },
@@ -40,12 +62,13 @@ const MODE_LABEL: Record<string, { title: string; desc: string }> = {
 };
 
 export function Mode() {
-  const { level, cardType } = useLoaderData() as ModeLoaderData;
+  const { level, cardType, learnedByMode, learnedTotalCards } =
+    useLoaderData() as ModeLoaderData;
   const navigate = useNavigate();
   const params = useParams();
   const availableStudyModes = STUDY_MODES_BY_CARD_TYPE[cardType];
 
-  function handleClick(mode: 'flashcard' | 'recall' | 'cloze' | 'vocabulary'): void {
+  function handleClick(mode: ModeKey): void {
     if (mode === 'vocabulary') {
       navigate(`/vocabulary/${params.cefr}/${params.cardType}`);
     } else {
@@ -65,6 +88,8 @@ export function Mode() {
           const isStudy = mode !== 'vocabulary';
           const disabled = isStudy && !availableStudyModes.includes(mode);
           if (!meta) return null;
+          const learnedCount =
+            mode === 'vocabulary' ? learnedTotalCards : learnedByMode[mode];
           return (
             <button
               key={mode}
@@ -75,6 +100,9 @@ export function Mode() {
             >
               <div className={styles.tileTitle}>{meta.title}</div>
               <div className={styles.tileDesc}>{meta.desc}</div>
+              {!disabled && learnedCount > 0 && (
+                <div className={styles.tileMeta}>학습 {learnedCount}</div>
+              )}
             </button>
           );
         })}

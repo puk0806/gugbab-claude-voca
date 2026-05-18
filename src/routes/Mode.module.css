@@ -56,3 +56,10 @@
   font-size: 13px;
   color: var(--gugbab-color-fg-secondary);
 }
+
+.tileMeta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--gugbab-color-fg-secondary);
+  font-weight: 600;
+}
