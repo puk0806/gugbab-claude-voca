@@ -6,13 +6,7 @@ import { LevelCard } from './LevelCard';
 describe('<LevelCard>', () => {
   it('레벨 텍스트와 subtitle을 렌더한다', () => {
     render(
-      <LevelCard
-        level="A1"
-        subtitle="기초 일상"
-        totalCount={120}
-        learnedCount={30}
-        dueCount={5}
-      />,
+      <LevelCard level="A1" subtitle="기초 일상" totalCount={120} learnedCount={30} dueCount={5} />,
     );
     expect(screen.getByText('A1')).toBeInTheDocument();
     expect(screen.getByText('기초 일상')).toBeInTheDocument();
@@ -37,15 +31,7 @@ describe('<LevelCard>', () => {
   });
 
   it('dueCount > 0이면 due 배지 표시', () => {
-    render(
-      <LevelCard
-        level="A1"
-        subtitle=""
-        totalCount={10}
-        learnedCount={2}
-        dueCount={7}
-      />,
-    );
+    render(<LevelCard level="A1" subtitle="" totalCount={10} learnedCount={2} dueCount={7} />);
     expect(screen.getByLabelText(/오늘 복습 7장/)).toBeInTheDocument();
   });
 
@@ -63,5 +49,25 @@ describe('<LevelCard>', () => {
     );
     await userEvent.click(screen.getByRole('button'));
     expect(handle).toHaveBeenCalledTimes(1);
+  });
+
+  it('학습 카운트 텍스트 "학습 N / M" 표시 (활성 상태)', () => {
+    render(<LevelCard level="A1" subtitle="" totalCount={649} learnedCount={5} dueCount={0} />);
+    expect(screen.getByText(/학습 5\s*\/\s*649/)).toBeInTheDocument();
+  });
+
+  it('disabled 상태에서는 "학습 N/M" 텍스트 미표시', () => {
+    render(
+      <LevelCard level="C2" subtitle="" totalCount={0} learnedCount={0} dueCount={0} disabled />,
+    );
+    expect(screen.queryByText(/학습 0/)).not.toBeInTheDocument();
+  });
+
+  it('progressbar aria-valuenow 가 ratio 100배 (반올림)', () => {
+    render(<LevelCard level="A1" subtitle="" totalCount={100} learnedCount={37} dueCount={0} />);
+    expect(screen.getByRole('progressbar', { name: /A1 진도/ })).toHaveAttribute(
+      'aria-valuenow',
+      '37',
+    );
   });
 });

@@ -18,4 +18,25 @@ describe('<ProgressBar>', () => {
     render(<ProgressBar value={2} ariaLabel="t" />);
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100');
   });
+
+  it('value 0 이면 fill width 도 0%', () => {
+    render(<ProgressBar value={0} ariaLabel="t" />);
+    const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
+    expect(fill.style.width).toBe('0%');
+  });
+
+  it('value > 0 인데 percent 가 4 미만이면 최소 4% 가시화 (aria-valuenow 는 실제값 유지)', () => {
+    // 5/899 = 0.0056 → 반올림 1% → 시각적으로 안 보임 → 4% 보정
+    render(<ProgressBar value={5 / 899} ariaLabel="t" />);
+    const bar = screen.getByRole('progressbar');
+    expect(bar).toHaveAttribute('aria-valuenow', '1'); // 의미는 1%
+    const fill = bar.firstElementChild as HTMLElement;
+    expect(fill.style.width).toBe('4%'); // 시각은 4%
+  });
+
+  it('value 가 4% 이상이면 보정 없이 그대로', () => {
+    render(<ProgressBar value={0.1} ariaLabel="t" />);
+    const fill = screen.getByRole('progressbar').firstElementChild as HTMLElement;
+    expect(fill.style.width).toBe('10%');
+  });
 });

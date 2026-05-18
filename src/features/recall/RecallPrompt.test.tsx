@@ -126,9 +126,7 @@ describe('<RecallPrompt>', () => {
 
   it('회귀: card prop 변경 시 reveal·submitted state 자동 reset', async () => {
     const onAnswer = vi.fn();
-    const { rerender } = render(
-      <RecallPrompt card={WORD} cardType="word" onAnswer={onAnswer} />,
-    );
+    const { rerender } = render(<RecallPrompt card={WORD} cardType="word" onAnswer={onAnswer} />);
     // 1번째 카드에서 reveal까지
     await userEvent.type(screen.getByRole('textbox', { name: '영어 입력' }), 'wrong');
     await userEvent.click(screen.getByRole('button', { name: '제출' }));

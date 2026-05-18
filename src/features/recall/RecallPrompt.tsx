@@ -13,8 +13,8 @@
  * 이는 reveal 직후 카드가 advance되어 정답을 못 보는 버그를 방지한다.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fillCloze } from '@/content';
 import type { SentenceEntry, WordEntry } from '@/content';
+import { fillCloze } from '@/content';
 import type { SrsRating } from '@/shared/types';
 import { isCorrect } from '@/srs';
 import styles from './RecallPrompt.module.css';
