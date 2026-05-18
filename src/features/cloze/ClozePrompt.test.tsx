@@ -12,6 +12,14 @@ const SENTENCE: SentenceEntry = {
   cloze: ['go'],
 };
 
+const SENTENCE2: SentenceEntry = {
+  id: 's_a1_010',
+  level: 'A1',
+  english: 'She is a {teacher}.',
+  korean: '그녀는 선생님이에요.',
+  cloze: ['teacher'],
+};
+
 const MULTI: SentenceEntry = {
   id: 's_a1_xxx',
   level: 'A1',
@@ -27,19 +35,57 @@ describe('<ClozePrompt>', () => {
     expect(screen.getByText('저는 매일 학교에 가요.')).toBeInTheDocument();
   });
 
-  it('정답 입력 + 제출 시 onAnswer("good")', async () => {
+  it('정답 입력 + 제출 시 "정답입니다!" 피드백 + "다음 카드" 버튼, onAnswer 즉시 호출 X', async () => {
     const onAnswer = vi.fn();
     render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
     await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'go');
     await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    expect(screen.getByText('정답입니다!')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다음 카드' })).toBeInTheDocument();
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+
+  it('정답 후 "다음 카드" 클릭 시 onAnswer("good")', async () => {
+    const onAnswer = vi.fn();
+    render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'go');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
     expect(onAnswer).toHaveBeenCalledWith('good');
   });
 
-  it('오답 시 "정답 보기" 버튼 노출', async () => {
-    render(<ClozePrompt card={SENTENCE} onAnswer={vi.fn()} />);
+  it('오답 시 "틀렸어요" 피드백 + "다시 시도"/"정답 보기" 노출, onAnswer 호출 X', async () => {
+    const onAnswer = vi.fn();
+    render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
     await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'went');
     await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    expect(screen.getByText(/틀렸어요/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '정답 보기' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+
+  it('"정답 보기" 클릭 시 정답 노출, onAnswer 즉시 호출 X (advance 방지)', async () => {
+    const onAnswer = vi.fn();
+    render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'wrong');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '정답 보기' }));
+    // 정답 텍스트 노출 — '정답:' 영역 안에 'go' 있어야
+    const revealBlock = screen.getByRole('status', { name: '' });
+    expect(revealBlock).toHaveTextContent('go');
+    expect(screen.getByRole('button', { name: '다음 카드' })).toBeInTheDocument();
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+
+  it('정답 보기 후 "다음 카드" → onAnswer("again")', async () => {
+    const onAnswer = vi.fn();
+    render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'wrong');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '정답 보기' }));
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
+    expect(onAnswer).toHaveBeenCalledWith('again');
   });
 
   it('빈칸 2개 카드: 입력창 2개 표시', () => {
@@ -59,16 +105,53 @@ describe('<ClozePrompt>', () => {
     await userEvent.type(screen.getByRole('textbox', { name: '빈칸 2 입력' }), 'school');
     expect(screen.getByRole('button', { name: '제출' })).toBeEnabled();
     await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
     expect(onAnswer).toHaveBeenCalledWith('good');
   });
 
-  it('빈칸 2개 중 하나만 오답이면 again 처리', async () => {
+  it('빈칸 2개 중 하나만 오답 → 정답 보기 → 다음 카드 시 again', async () => {
     const onAnswer = vi.fn();
     render(<ClozePrompt card={MULTI} onAnswer={onAnswer} />);
     await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'go');
     await userEvent.type(screen.getByRole('textbox', { name: '빈칸 2 입력' }), 'wrong');
     await userEvent.click(screen.getByRole('button', { name: '제출' }));
     await userEvent.click(screen.getByRole('button', { name: '정답 보기' }));
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
     expect(onAnswer).toHaveBeenCalledWith('again');
+  });
+
+  it('3회 연속 오답 시 자동 reveal (onAnswer 호출 X)', async () => {
+    const onAnswer = vi.fn();
+    render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
+    for (let i = 0; i < 3; i++) {
+      const input = screen.getByRole('textbox', { name: '빈칸 1 입력' });
+      await userEvent.clear(input);
+      await userEvent.type(input, `wrong${i}`);
+      await userEvent.click(screen.getByRole('button', { name: '제출' }));
+      if (i < 2) {
+        await userEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+      }
+    }
+    // 3회째 자동 reveal — 정답 노출 + "다음 카드" 노출
+    expect(screen.getByRole('button', { name: '다음 카드' })).toBeInTheDocument();
+    expect(onAnswer).not.toHaveBeenCalled();
+  });
+
+  it('회귀: card prop 변경 시 reveal·submitted state 자동 reset', async () => {
+    const onAnswer = vi.fn();
+    const { rerender } = render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
+    // 1번째 카드에서 reveal까지
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'wrong');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '정답 보기' }));
+    expect(screen.getByRole('button', { name: '다음 카드' })).toBeInTheDocument();
+
+    // 2번째 카드로 prop 변경
+    rerender(<ClozePrompt card={SENTENCE2} onAnswer={onAnswer} />);
+
+    // 새 카드: 한국어 갱신 + reveal 사라짐 + 입력 활성
+    expect(screen.getByText('그녀는 선생님이에요.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: '빈칸 1 입력' })).not.toBeDisabled();
+    expect(screen.queryByRole('button', { name: '다음 카드' })).not.toBeInTheDocument();
   });
 });

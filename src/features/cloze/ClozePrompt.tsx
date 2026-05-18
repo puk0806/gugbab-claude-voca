@@ -5,6 +5,14 @@
  * - cloze 배열에 빈칸별 정답
  * - 모든 빈칸이 정답이어야 good. 하나라도 오답이면 again
  * - 빈칸 1~N개 지원 (N개면 N개 입력창 표시)
+ *
+ * 흐름 (Recall 과 동일 UX):
+ *   - 정답: "정답입니다!" 피드백 + "다음 카드" 버튼 (사용자가 명시적으로 진행)
+ *   - 오답: "틀렸어요" 피드백 + "다시 시도" / "정답 보기"
+ *     - "정답 보기": 정답 노출 + "다음 카드" (advance는 사용자 클릭 시점)
+ *     - 3회 연속 오답 시 자동으로 정답보기 모드 (advance 보류)
+ *
+ * `onAnswer` 호출 시점은 항상 "다음 카드" 버튼 클릭 — Recall 과 일관.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseCloze } from '@/content';
@@ -48,19 +56,17 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
     const ok = isAllCorrect(inputs, expecteds);
     setSubmitted(true);
     setCorrect(ok);
-    if (ok) {
-      onAnswer('good');
-    } else {
+    if (!ok) {
       setAttempts((prev) => prev + 1);
     }
-  }, [allFilled, inputs, expecteds, onAnswer]);
+  }, [allFilled, inputs, expecteds]);
 
+  // 3회 연속 오답 시 자동 reveal. onAnswer 는 "다음 카드" 클릭까지 보류.
   useEffect(() => {
     if (attempts >= MAX_RETRIES_BEFORE_REVEAL && !revealed) {
       setRevealed(true);
-      onAnswer('again');
     }
-  }, [attempts, revealed, onAnswer]);
+  }, [attempts, revealed]);
 
   const handleRetry = useCallback(() => {
     setInputs(expecteds.map(() => ''));
@@ -71,17 +77,12 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
 
   const handleReveal = useCallback(() => {
     setRevealed(true);
-    onAnswer('again');
-  }, [onAnswer]);
+  }, []);
 
-  const reset = useCallback(() => {
-    setInputs(expecteds.map(() => ''));
-    setSubmitted(false);
-    setCorrect(null);
-    setRevealed(false);
-    setAttempts(0);
-    firstInputRef.current?.focus();
-  }, [expecteds]);
+  const handleNext = useCallback(() => {
+    const rating: SrsRating = correct === true && !revealed ? 'good' : 'again';
+    onAnswer(rating);
+  }, [correct, revealed, onAnswer]);
 
   const updateInput = (index: number, value: string): void => {
     setInputs((prev) => {
@@ -90,6 +91,9 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
       return next;
     });
   };
+
+  const showCorrectPath = submitted && correct === true;
+  const showWrongPath = submitted && correct === false && !revealed;
 
   return (
     <div className={styles.root}>
@@ -135,25 +139,36 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
-              disabled={revealed}
+              disabled={submitted}
               aria-label={`빈칸 ${i + 1} 입력`}
             />
           </div>
         ))}
-
-        {revealed && (
-          <div className={styles.reveal}>
-            정답:
-            {expecteds.map((ans, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: expecteds is index-stable
-              <span key={`ans-${i}`} className={styles.revealAnswer}>
-                {ans}
-                {i < expecteds.length - 1 ? ', ' : ''}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
+
+      {showCorrectPath && (
+        <div className={`${styles.feedback} ${styles.feedbackCorrect}`} role="status">
+          정답입니다!
+        </div>
+      )}
+      {showWrongPath && (
+        <div className={`${styles.feedback} ${styles.feedbackWrong}`} role="status">
+          틀렸어요. 다시 시도하거나 정답을 확인해 보세요.
+        </div>
+      )}
+
+      {revealed && (
+        <div className={styles.reveal} role="status">
+          정답:
+          {expecteds.map((ans, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: expecteds is index-stable
+            <span key={`ans-${i}`} className={styles.revealAnswer}>
+              {ans}
+              {i < expecteds.length - 1 ? ', ' : ''}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className={styles.actions}>
         {!submitted && (
@@ -166,7 +181,16 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
             제출
           </button>
         )}
-        {submitted && correct === false && !revealed && (
+        {showCorrectPath && (
+          <button
+            type="button"
+            className={`${styles.action} ${styles.primary}`}
+            onClick={handleNext}
+          >
+            다음 카드
+          </button>
+        )}
+        {showWrongPath && (
           <>
             <button type="button" className={styles.action} onClick={handleRetry}>
               다시 시도
@@ -184,7 +208,7 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
           <button
             type="button"
             className={`${styles.action} ${styles.primary}`}
-            onClick={reset}
+            onClick={handleNext}
           >
             다음 카드
           </button>
