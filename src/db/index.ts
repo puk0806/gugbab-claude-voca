@@ -22,8 +22,10 @@ export {
   getDueCards,
   getNewProgress,
   getProgress,
+  getProgressSummary,
   upsertProgress,
 } from './repository/progressRepo';
+export type { ProgressSummary } from './repository/progressSummary';
 // sessionLogRepo
 export type { CreateSessionInput, EndSessionInput } from './repository/sessionLogRepo';
 export {

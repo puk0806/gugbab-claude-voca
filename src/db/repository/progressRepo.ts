@@ -7,6 +7,7 @@
 import type { CardType, CEFR, StudyMode } from '@/shared/types';
 import type { SrsCard } from '@/srs/types';
 import { db } from '../schema';
+import { type ProgressSummary, summarizeProgress } from './progressSummary';
 
 /**
  * 단일 카드 진도 조회 (cardId + studyMode 복합 PK).
@@ -99,4 +100,18 @@ export async function getAllProgressByLevel(
     .equals(cardType)
     .filter((c) => c.level === level)
     .toArray();
+}
+
+/**
+ * (cardType, level) 범위의 progress를 cardId 단위로 집계.
+ * 학습 진도 표시(Home·Level·Mode loader)에 사용.
+ */
+export async function getProgressSummary(
+  cardType: CardType,
+  level: CEFR,
+  totalContent: number,
+  now: number,
+): Promise<ProgressSummary> {
+  const progress = await getAllProgressByLevel(cardType, level);
+  return summarizeProgress({ totalContent, progress, now });
 }

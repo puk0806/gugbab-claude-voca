@@ -8,6 +8,7 @@ import {
   getDueCards,
   getNewProgress,
   getProgress,
+  getProgressSummary,
   upsertProgress,
 } from './progressRepo';
 
@@ -156,6 +157,36 @@ describe('progressRepo', () => {
       const words = await getAllProgressByLevel('word', 'A1');
       expect(words).toHaveLength(1);
       expect(words[0]?.cardId).toBe('w_a1_001');
+    });
+  });
+
+  describe('getProgressSummary (Home/Level/Mode loader 집계용)', () => {
+    it('진도 없으면 모두 0', async () => {
+      const r = await getProgressSummary('word', 'A1', 100, NOW);
+      expect(r).toEqual({ total: 100, learned: 0, completed: 0, due: 0 });
+    });
+
+    it('cardId 단위 학습 카드 수 집계', async () => {
+      await upsertProgress(makeCard({ cardId: 'c1', studyMode: 'flashcard' }));
+      await upsertProgress(makeCard({ cardId: 'c1', studyMode: 'recall' }));
+      await upsertProgress(makeCard({ cardId: 'c2', studyMode: 'flashcard' }));
+      const r = await getProgressSummary('word', 'A1', 100, NOW);
+      expect(r.learned).toBe(2);
+    });
+
+    it('due/completed 계산 위임 (summarizeProgress 동작 확인)', async () => {
+      // c1: completed (review + future due)
+      await upsertProgress(
+        makeCard({ cardId: 'c1', state: 'review', dueAt: NOW + DAY }),
+      );
+      // c2: due (review + past due)
+      await upsertProgress(
+        makeCard({ cardId: 'c2', state: 'review', dueAt: NOW - DAY }),
+      );
+      const r = await getProgressSummary('word', 'A1', 100, NOW);
+      expect(r.learned).toBe(2);
+      expect(r.completed).toBe(1);
+      expect(r.due).toBe(1);
     });
   });
 });
