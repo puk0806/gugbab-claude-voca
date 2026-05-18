@@ -5,7 +5,7 @@
   "type": "module",
   "description": "CEFR 영어 회화 단어·문장 학습 PWA (1인용)",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "packageManager": "pnpm@9.15.0",
   "scripts": {

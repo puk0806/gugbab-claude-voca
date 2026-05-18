@@ -7,6 +7,10 @@ describe('features/learning public API (barrel)', () => {
   });
 
   it('public API 심볼 명시 검증', () => {
-    expect(Object.keys(PublicApi).sort()).toEqual(['composeQueue']);
+    expect(Object.keys(PublicApi).sort()).toEqual([
+      'SessionSummary',
+      'composeQueue',
+      'useLearnSession',
+    ]);
   });
 });

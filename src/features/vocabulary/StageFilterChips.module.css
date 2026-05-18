@@ -1,0 +1,71 @@
+.stageChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.stageChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  font-size: 12px;
+  color: var(--gugbab-color-fg-secondary);
+  cursor: pointer;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+
+.stageChip:hover {
+  background: var(--gugbab-color-bg-elevated);
+}
+
+.stageChip.active {
+  background: var(--gugbab-color-accent-base);
+  color: var(--gugbab-color-accent-fg);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.chipCount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.stageChip.active .chipCount {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: 0 0 8px;
+}
+
+.dot-unknown {
+  background: #ef4444;
+}
+.dot-review-due {
+  background: #f97316;
+}
+.dot-learning {
+  background: #eab308;
+}
+.dot-new {
+  background: var(--gugbab-color-fg-muted, #9ca3af);
+}
+.dot-completed {
+  background: #3b82f6;
+}
+.dot-known {
+  background: #10b981;
+}

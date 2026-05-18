@@ -18,6 +18,20 @@ export const MANIFEST_A1_ONLY = {
   },
 };
 
+/**
+ * 실 production 카운트와 동일한 fixture.
+ * 신규 통합 테스트(전 레벨 활성화 가정)에서 사용.
+ * 카운트는 public/data/manifest.json과 sync.
+ */
+export const MANIFEST_FULL = {
+  buildAt: '2026-05-16T00:00:00Z',
+  schemaVersion: 1,
+  counts: {
+    words: { A1: 649, A2: 518, B1: 500, B2: 502, C1: 407, C2: 411 },
+    sentences: { A1: 250, A2: 200, B1: 200, B2: 200, C1: 150, C2: 150 },
+  },
+};
+
 export const WORDS_A1_FIXTURE = [
   {
     id: 'w_a1_001',

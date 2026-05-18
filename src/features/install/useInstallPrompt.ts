@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { detectIOSSafari, detectStandalone } from './detectInstallEnv';
 
 /**
  * PWA install prompt 훅.
@@ -24,28 +25,6 @@ export interface UseInstallPromptResult {
   readonly mode: InstallMode;
   readonly canInstall: boolean;
   readonly promptInstall: () => Promise<{ outcome: 'accepted' | 'dismissed' } | null>;
-}
-
-function detectStandalone(): boolean {
-  if (typeof window === 'undefined') return false;
-  if (
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(display-mode: standalone)').matches
-  ) {
-    return true;
-  }
-  // iOS Safari: navigator.standalone (non-standard)
-  const navAny = window.navigator as Navigator & { standalone?: boolean };
-  return navAny.standalone === true;
-}
-
-function detectIOSSafari(): boolean {
-  if (typeof window === 'undefined') return false;
-  const ua = window.navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-  // iOS Chrome·FF 등은 WebKit 기반이지만 install prompt 동일하게 미지원
-  // → iOS 자체를 감지하면 ios-guide 처리
-  return isIOS;
 }
 
 export function useInstallPrompt(): UseInstallPromptResult {
