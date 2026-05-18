@@ -1,8 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockFetchByUrlSuffix, renderRoutes } from '@/__tests__/router-helpers';
 import { upsertProgress } from '@/db';
 import { resetDb } from '@/db/schema';
-import { mockFetchByUrlSuffix, renderRoutes } from '@/__tests__/router-helpers';
 import { routes } from '@/router';
 
 describe('Mode route (/level/:cefr/:cardType)', () => {

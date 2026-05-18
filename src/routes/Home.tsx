@@ -8,7 +8,7 @@ import { useLoaderData, useNavigate } from 'react-router-dom';
 import { loadManifest } from '@/content';
 import { getProgressSummary } from '@/db';
 import { LevelCard } from '@/shared/components';
-import { CEFR_LEVELS, type CEFR } from '@/shared/types';
+import { type CEFR, CEFR_LEVELS } from '@/shared/types';
 import styles from './Home.module.css';
 
 interface LevelSummary {

@@ -1,9 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MANIFEST_A1_ONLY, mockFetchByUrlSuffix, renderRoutes } from '@/__tests__/router-helpers';
 import { resetContentCache } from '@/content';
 import { upsertProgress } from '@/db';
 import { resetDb } from '@/db/schema';
-import { MANIFEST_A1_ONLY, mockFetchByUrlSuffix, renderRoutes } from '@/__tests__/router-helpers';
 import { routes } from '@/router';
 
 describe('Home route (/)', () => {

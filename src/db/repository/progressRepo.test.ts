@@ -137,7 +137,9 @@ describe('progressRepo', () => {
     it('cardType + level 일치하는 모든 mode progress 반환', async () => {
       await upsertProgress(makeCard({ cardId: 'a', studyMode: 'flashcard', level: 'A1' }));
       await upsertProgress(makeCard({ cardId: 'a', studyMode: 'recall', level: 'A1' }));
-      await upsertProgress(makeCard({ cardId: 'b', studyMode: 'cloze', cardType: 'sentence', level: 'A1' }));
+      await upsertProgress(
+        makeCard({ cardId: 'b', studyMode: 'cloze', cardType: 'sentence', level: 'A1' }),
+      );
       const wordA1 = await getAllProgressByLevel('word', 'A1');
       expect(wordA1).toHaveLength(2);
       expect(wordA1.map((c) => c.studyMode).sort()).toEqual(['flashcard', 'recall']);
@@ -176,13 +178,9 @@ describe('progressRepo', () => {
 
     it('due/completed 계산 위임 (summarizeProgress 동작 확인)', async () => {
       // c1: completed (review + future due)
-      await upsertProgress(
-        makeCard({ cardId: 'c1', state: 'review', dueAt: NOW + DAY }),
-      );
+      await upsertProgress(makeCard({ cardId: 'c1', state: 'review', dueAt: NOW + DAY }));
       // c2: due (review + past due)
-      await upsertProgress(
-        makeCard({ cardId: 'c2', state: 'review', dueAt: NOW - DAY }),
-      );
+      await upsertProgress(makeCard({ cardId: 'c2', state: 'review', dueAt: NOW - DAY }));
       const r = await getProgressSummary('word', 'A1', 100, NOW);
       expect(r.learned).toBe(2);
       expect(r.completed).toBe(1);

@@ -7,7 +7,7 @@
 import { type LoaderFunctionArgs, useLoaderData, useNavigate, useParams } from 'react-router-dom';
 import { loadManifest } from '@/content';
 import { getProgressSummary, type ProgressSummary } from '@/db';
-import { isCefr, type CEFR } from '@/shared/types';
+import { type CEFR, isCefr } from '@/shared/types';
 import styles from './Level.module.css';
 
 interface LevelLoaderData {
@@ -38,7 +38,9 @@ function ProgressMeta({ s }: { readonly s: ProgressSummary }) {
   if (s.total === 0) return null;
   return (
     <div className={styles.progressMeta}>
-      <span>학습 {s.learned} / {s.total}</span>
+      <span>
+        학습 {s.learned} / {s.total}
+      </span>
       {s.due > 0 && <span className={styles.due}>due {s.due}</span>}
       {s.completed > 0 && <span className={styles.completed}>완료 {s.completed}</span>}
     </div>

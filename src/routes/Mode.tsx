@@ -62,8 +62,7 @@ const MODE_LABEL: Record<ModeKey, { title: string; desc: string }> = {
 };
 
 export function Mode() {
-  const { level, cardType, learnedByMode, learnedTotalCards } =
-    useLoaderData() as ModeLoaderData;
+  const { level, cardType, learnedByMode, learnedTotalCards } = useLoaderData() as ModeLoaderData;
   const navigate = useNavigate();
   const params = useParams();
   const availableStudyModes = STUDY_MODES_BY_CARD_TYPE[cardType];
@@ -88,8 +87,7 @@ export function Mode() {
           const isStudy = mode !== 'vocabulary';
           const disabled = isStudy && !availableStudyModes.includes(mode);
           if (!meta) return null;
-          const learnedCount =
-            mode === 'vocabulary' ? learnedTotalCards : learnedByMode[mode];
+          const learnedCount = mode === 'vocabulary' ? learnedTotalCards : learnedByMode[mode];
           return (
             <button
               key={mode}

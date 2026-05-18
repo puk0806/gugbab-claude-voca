@@ -91,10 +91,7 @@ export async function getAllProgressByCardId(cardId: string): Promise<SrsCard[]>
  * Dexie `cardType` 인덱스 조회 후 `level` in-memory 필터.
  * A1 600개 × 최대 3 mode = 1800 row 한도라 일괄 fetch 비용 무시할 수준.
  */
-export async function getAllProgressByLevel(
-  cardType: CardType,
-  level: CEFR,
-): Promise<SrsCard[]> {
+export async function getAllProgressByLevel(cardType: CardType, level: CEFR): Promise<SrsCard[]> {
   return await db.cardProgress
     .where('cardType')
     .equals(cardType)
