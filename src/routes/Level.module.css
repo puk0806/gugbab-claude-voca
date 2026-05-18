@@ -57,3 +57,22 @@
   color: var(--gugbab-color-fg-muted);
   font-style: italic;
 }
+
+.progressMeta {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--gugbab-color-fg-secondary);
+  flex-wrap: wrap;
+}
+
+.due {
+  color: var(--gugbab-color-warning-base, #f59e0b);
+  font-weight: 600;
+}
+
+.completed {
+  color: var(--gugbab-color-success-base, #16a34a);
+  font-weight: 600;
+}

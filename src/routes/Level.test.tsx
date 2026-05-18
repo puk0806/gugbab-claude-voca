@@ -1,12 +1,15 @@
 import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetContentCache } from '@/content';
+import { upsertProgress } from '@/db';
+import { resetDb } from '@/db/schema';
 import { MANIFEST_A1_ONLY, mockFetchByUrlSuffix, renderRoutes } from '@/__tests__/router-helpers';
 import { routes } from '@/router';
 
 describe('Level route (/level/:cefr)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     resetContentCache();
+    await resetDb();
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -30,5 +33,28 @@ describe('Level route (/level/:cefr)', () => {
     });
     expect(screen.getByRole('button', { name: /단어 학습/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: /문장 학습/ })).toBeDisabled();
+  });
+
+  it('A1 word에 progress 1건 → 단어 타일에 학습 카드 수 라벨', async () => {
+    const now = Date.now();
+    await upsertProgress({
+      cardId: 'w_a1_001',
+      studyMode: 'flashcard',
+      cardType: 'word',
+      level: 'A1',
+      state: 'learning',
+      repetitions: 1,
+      easeFactor: 2.5,
+      intervalDays: 1,
+      dueAt: now + 86_400_000,
+      lastReviewedAt: now,
+      lapses: 0,
+      lastRating: 'good',
+    });
+    mockFetchByUrlSuffix({ '/data/manifest.json': MANIFEST_A1_ONLY });
+    renderRoutes(routes, '/level/A1');
+    await waitFor(() => screen.getByRole('heading', { name: /A1 레벨/ }));
+    const wordTile = screen.getByRole('button', { name: /단어 학습/ });
+    expect(wordTile).toHaveTextContent(/학습 1\s*\/\s*649/);
   });
 });
