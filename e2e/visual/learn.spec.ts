@@ -59,10 +59,7 @@ test.describe('learn — visual regression (결정론 fixture)', () => {
     await page.goto('/learn/A1/word/flashcard');
     await settle(page);
     // 플래시카드 첫 카드 영문이 표시될 때까지 대기 (loader + 첫 렌더)
-    await page
-      .locator('main')
-      .first()
-      .waitFor({ state: 'visible', timeout: 10_000 });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 10_000 });
     // 추가 안정화 — 폰트/이미지 로드 + 라우터 transition
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('learn-A1-word-flashcard.png', {
@@ -73,12 +70,29 @@ test.describe('learn — visual regression (결정론 fixture)', () => {
   test('learn-A1-sentence-cloze', async ({ page }) => {
     await page.goto('/learn/A1/sentence/cloze');
     await settle(page);
-    await page
-      .locator('main')
-      .first()
-      .waitFor({ state: 'visible', timeout: 10_000 });
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 10_000 });
     await page.waitForTimeout(500);
     await expect(page).toHaveScreenshot('learn-A1-sentence-cloze.png', {
+      fullPage: true,
+    });
+  });
+
+  test('learn-A1-word-recall', async ({ page }) => {
+    await page.goto('/learn/A1/word/recall');
+    await settle(page);
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 10_000 });
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot('learn-A1-word-recall.png', {
+      fullPage: true,
+    });
+  });
+
+  test('learn-A1-sentence-recall', async ({ page }) => {
+    await page.goto('/learn/A1/sentence/recall');
+    await settle(page);
+    await page.locator('main').first().waitFor({ state: 'visible', timeout: 10_000 });
+    await page.waitForTimeout(500);
+    await expect(page).toHaveScreenshot('learn-A1-sentence-recall.png', {
       fullPage: true,
     });
   });

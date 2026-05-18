@@ -15,8 +15,8 @@
  * `onAnswer` 호출 시점은 항상 "다음 카드" 버튼 클릭 — Recall 과 일관.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { parseCloze } from '@/content';
 import type { SentenceEntry } from '@/content';
+import { parseCloze } from '@/content';
 import type { SrsRating } from '@/shared/types';
 import { isAllCorrect } from '@/srs';
 import styles from './ClozePrompt.module.css';
