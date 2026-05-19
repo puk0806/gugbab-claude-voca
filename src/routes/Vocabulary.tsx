@@ -15,8 +15,8 @@
 import { useCallback, useState } from 'react';
 import { type LoaderFunctionArgs, useLoaderData } from 'react-router-dom';
 import { Virtuoso } from 'react-virtuoso';
-import { fillCloze, loadSentences, loadWords } from '@/content';
 import type { SentenceEntry, WordEntry } from '@/content';
+import { fillCloze, loadSentences, loadWords } from '@/content';
 import { clearMark, getAllProgressByLevel, listMarksByLevel, setMark } from '@/db';
 import {
   type LearningStage,
@@ -26,21 +26,17 @@ import {
   useVocabularyCards,
   VocabularyRow,
 } from '@/features/vocabulary';
+import { type CardType, type CEFR, isCardType, isCefr, type UserMark } from '@/shared/types';
 import type { SrsCard } from '@/srs/types';
-import {
-  type CardType,
-  type CEFR,
-  isCardType,
-  isCefr,
-  type UserMark,
-} from '@/shared/types';
 import styles from './Vocabulary.module.css';
+
+type NonNullMark = Exclude<UserMark, null>;
 
 interface VocabularyLoaderData {
   readonly level: CEFR;
   readonly cardType: CardType;
   readonly cards: ReadonlyArray<WordEntry | SentenceEntry>;
-  readonly initialMarks: Readonly<Record<string, 'known' | 'unknown'>>;
+  readonly initialMarks: Readonly<Record<string, NonNullMark>>;
   readonly initialProgress: readonly SrsCard[];
 }
 
@@ -52,8 +48,7 @@ export async function vocabularyLoader({
   const cefr = params.cefr;
   const cardType = params.cardType;
   if (!cefr || !isCefr(cefr)) throw new Response('Invalid level', { status: 404 });
-  if (!cardType || !isCardType(cardType))
-    throw new Response('Invalid card type', { status: 404 });
+  if (!cardType || !isCardType(cardType)) throw new Response('Invalid card type', { status: 404 });
 
   const [cards, marksMap, progress] = await Promise.all([
     cardType === 'word' ? loadWords(cefr) : loadSentences(cefr),
@@ -61,25 +56,17 @@ export async function vocabularyLoader({
     getAllProgressByLevel(cardType, cefr),
   ]);
 
-  const initialMarks: Record<string, 'known' | 'unknown'> = {};
+  const initialMarks: Record<string, NonNullMark> = {};
   for (const [id, mark] of marksMap.entries()) initialMarks[id] = mark;
 
   return { level: cefr, cardType, cards, initialMarks, initialProgress: progress };
 }
 
-function getDisplayEnglish(
-  card: WordEntry | SentenceEntry,
-  cardType: CardType,
-): string {
-  return cardType === 'sentence'
-    ? fillCloze((card as SentenceEntry).english)
-    : card.english;
+function getDisplayEnglish(card: WordEntry | SentenceEntry, cardType: CardType): string {
+  return cardType === 'sentence' ? fillCloze((card as SentenceEntry).english) : card.english;
 }
 
-function getDisplayKorean(
-  card: WordEntry | SentenceEntry,
-  cardType: CardType,
-): string {
+function getDisplayKorean(card: WordEntry | SentenceEntry, cardType: CardType): string {
   if (cardType !== 'word') return card.korean;
   const word = card as WordEntry;
   return word.secondaryKorean ? `${word.korean} / ${word.secondaryKorean}` : word.korean;
@@ -88,22 +75,21 @@ function getDisplayKorean(
 export function Vocabulary() {
   const { level, cardType, cards, initialMarks, initialProgress } =
     useLoaderData() as VocabularyLoaderData;
-  const [marks, setMarks] = useState<Record<string, 'known' | 'unknown'>>(initialMarks);
+  const [marks, setMarks] = useState<Record<string, NonNullMark>>(initialMarks);
   const [query, setQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<LearningStage | 'all'>('all');
 
-  const { scored, stageCounts, filtered, visible, hasMore, loadMore } =
-    useVocabularyCards({
-      cards,
-      cardType,
-      marks,
-      initialProgress,
-      query,
-      stageFilter,
-      pageSize: PAGE_SIZE,
-      getDisplayEnglish,
-      getDisplayKorean,
-    });
+  const { scored, stageCounts, filtered, visible, hasMore, loadMore } = useVocabularyCards({
+    cards,
+    cardType,
+    marks,
+    initialProgress,
+    query,
+    stageFilter,
+    pageSize: PAGE_SIZE,
+    getDisplayEnglish,
+    getDisplayKorean,
+  });
 
   const sentinelRef = useInfiniteSentinel(loadMore, {
     disabled: !hasMore,
@@ -141,8 +127,8 @@ export function Vocabulary() {
         {level} 단어장 ({cardType === 'word' ? '단어' : '문장'})
       </h1>
       <p className={styles.subheading}>
-        총 {cards.length}개 · 표시 {filtered.length}개 · 노출 {visible.length}개 (스크롤
-        시 +{PAGE_SIZE})
+        총 {cards.length}개 · 표시 {filtered.length}개 · 노출 {visible.length}개 (스크롤 시 +
+        {PAGE_SIZE})
       </p>
 
       <input

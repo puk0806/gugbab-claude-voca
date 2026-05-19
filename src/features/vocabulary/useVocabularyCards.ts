@@ -1,33 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { SentenceEntry, WordEntry } from '@/content';
+import type { CardType, StudyMode, UserMark } from '@/shared/types';
 import type { SrsCard } from '@/srs/types';
-import type { CardType } from '@/shared/types';
 import { computeLearningScore, type LearningStage } from './computeLearningScore';
 
 export interface ScoredCard {
   readonly card: WordEntry | SentenceEntry;
-  readonly mark: 'known' | 'unknown' | null;
+  readonly mark: Exclude<UserMark, null> | null;
   readonly stage: LearningStage;
   readonly score: number;
   readonly reps: number;
+  /** 각 mode 의 마지막 응답 통과 여부 (배지 표시용). */
+  readonly passedByMode: Readonly<Partial<Record<StudyMode, boolean>>>;
 }
 
 export interface UseVocabularyCardsParams {
   readonly cards: ReadonlyArray<WordEntry | SentenceEntry>;
   readonly cardType: CardType;
-  readonly marks: Readonly<Record<string, 'known' | 'unknown'>>;
+  readonly marks: Readonly<Record<string, Exclude<UserMark, null>>>;
   readonly initialProgress: readonly SrsCard[];
   readonly query: string;
   readonly stageFilter: LearningStage | 'all';
   readonly pageSize: number;
-  readonly getDisplayEnglish: (
-    card: WordEntry | SentenceEntry,
-    cardType: CardType,
-  ) => string;
-  readonly getDisplayKorean: (
-    card: WordEntry | SentenceEntry,
-    cardType: CardType,
-  ) => string;
+  readonly getDisplayEnglish: (card: WordEntry | SentenceEntry, cardType: CardType) => string;
+  readonly getDisplayKorean: (card: WordEntry | SentenceEntry, cardType: CardType) => string;
 }
 
 export interface UseVocabularyCardsResult {
@@ -52,9 +48,7 @@ export interface UseVocabularyCardsResult {
  *
  * 정렬 안정성: 한 세션 내 `now` 고정 (스크롤 중 재정렬 방지).
  */
-export function useVocabularyCards(
-  params: UseVocabularyCardsParams,
-): UseVocabularyCardsResult {
+export function useVocabularyCards(params: UseVocabularyCardsParams): UseVocabularyCardsResult {
   const {
     cards,
     cardType,
@@ -89,7 +83,11 @@ export function useVocabularyCards(
         now,
       });
       const reps = progressByMode.reduce((sum, p) => sum + p.repetitions, 0);
-      return { card: c, mark, stage, score, reps };
+      const passedByMode: Partial<Record<StudyMode, boolean>> = {};
+      for (const p of progressByMode) {
+        passedByMode[p.studyMode] = p.lastRating === 'good';
+      }
+      return { card: c, mark, stage, score, reps, passedByMode };
     });
   }, [cards, marks, progressByCardId, now]);
 
@@ -101,6 +99,7 @@ export function useVocabularyCards(
       new: 0,
       completed: 0,
       known: 0,
+      mastered: 0,
     };
     for (const s of scored) init[s.stage] += 1;
     return init;

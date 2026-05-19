@@ -1,7 +1,7 @@
 import type { LearningStage } from './computeLearningScore';
 import { STAGE_META } from './computeLearningScore';
-import { STAGE_ORDER } from './stageOrder';
 import styles from './StageFilterChips.module.css';
+import { STAGE_ORDER } from './stageOrder';
 
 export interface StageFilterChipsProps {
   readonly stageFilter: LearningStage | 'all';
@@ -13,8 +13,8 @@ export interface StageFilterChipsProps {
 /**
  * 학습 단계 필터 chip 헤더.
  *
- * 6개 단계(STAGE_ORDER) + 전체 1개 = 7개 tab.
- * 각 chip에 단계별 카운트 표시.
+ * 7개 단계(STAGE_ORDER: unknown · review-due · learning · new · completed · known · mastered)
+ * + 전체 1개 = 8개 tab. 각 chip에 단계별 카운트 표시.
  */
 export function StageFilterChips({
   stageFilter,

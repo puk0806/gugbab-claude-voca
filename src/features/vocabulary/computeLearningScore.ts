@@ -5,12 +5,12 @@
  * - 점수 높을수록 *잘 외움* → 단어장 하단 노출.
  *
  * 입력:
- *   - cardId 단위 mark (known / unknown / null)
+ *   - cardId 단위 mark (known / unknown / mastered / null)
  *   - 같은 cardId의 *모든 studyMode* SRS progress (flashcard·recall·cloze)
  *   - 현재 시각 now (epoch ms)
  *
  * 정책:
- *   - mark가 강한 신호 (사용자가 직접 표시): unknown -50 / known +50
+ *   - mark가 강한 신호 (사용자가 직접 표시): mastered +100 / known +50 / unknown -50
  *   - 그 외엔 SRS 상태 합산:
  *     - 어떤 mode든 dueAt ≤ now (복습 필요): -20 / mode
  *     - 어떤 mode든 learning/relearning: -10 / mode
@@ -23,9 +23,10 @@
  *   - 🟡 learning — 어떤 mode든 learning/relearning state (그리고 review-due 아님)
  *   - ⚪ new — progress 없음 또는 모든 mode가 state === 'new'
  *   - 🔵 completed — 모든 mode가 review state AND dueAt > now
- *   - 🟢 known — mark === 'known'
+ *   - 🟢 known — mark === 'known' (한 mode 만 통과 — 검증·학습 mode 중 하나)
+ *   - ⭐ mastered — mark === 'mastered' (cardType 비대칭 졸업 조건 충족)
  *
- * mark가 'known'이면 SRS 무관하게 🟢, 'unknown'이면 🔴 (사용자 의도 우선).
+ * mark가 'mastered'이면 SRS 무관 ⭐, 'known' 🟢, 'unknown' 🔴 (사용자 의도 우선).
  *
  * 본 모듈은 React·Dexie 의존 0의 순수 함수.
  */
@@ -37,10 +38,11 @@ export type LearningStage =
   | 'learning'
   | 'new'
   | 'completed'
-  | 'known';
+  | 'known'
+  | 'mastered';
 
 export interface LearningScoreInput {
-  readonly mark: 'known' | 'unknown' | null;
+  readonly mark: 'known' | 'unknown' | 'mastered' | null;
   /** 같은 cardId의 모든 studyMode progress row */
   readonly progressByMode: readonly SrsCard[];
   /** 현재 시각 (epoch ms) */
@@ -57,6 +59,9 @@ export function computeLearningScore(input: LearningScoreInput): LearningScoreRe
 
   if (mark === 'unknown') {
     return { score: -50, stage: 'unknown' };
+  }
+  if (mark === 'mastered') {
+    return { score: 100, stage: 'mastered' };
   }
   if (mark === 'known') {
     return { score: 50, stage: 'known' };
@@ -121,4 +126,5 @@ export const STAGE_META: Readonly<
   new: { label: '미학습', priority: 3 },
   completed: { label: '완료', priority: 4 },
   known: { label: '안다', priority: 5 },
+  mastered: { label: '마스터', priority: 6 },
 };

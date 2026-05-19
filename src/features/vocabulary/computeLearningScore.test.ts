@@ -108,9 +108,7 @@ describe('computeLearningScore', () => {
     it('review-due 1개 → -20', () => {
       const result = computeLearningScore({
         mark: null,
-        progressByMode: [
-          makeProgress({ state: 'review', dueAt: NOW - 1000, repetitions: 0 }),
-        ],
+        progressByMode: [makeProgress({ state: 'review', dueAt: NOW - 1000, repetitions: 0 })],
         now: NOW,
       });
       expect(result.score).toBe(-20);
@@ -119,9 +117,7 @@ describe('computeLearningScore', () => {
     it('repetitions 5회 × 2 = +10', () => {
       const result = computeLearningScore({
         mark: null,
-        progressByMode: [
-          makeProgress({ state: 'review', dueAt: NOW + 1000, repetitions: 5 }),
-        ],
+        progressByMode: [makeProgress({ state: 'review', dueAt: NOW + 1000, repetitions: 5 })],
         now: NOW,
       });
       expect(result.score).toBe(10 + 10); // +10 for review-not-due, +10 for reps
@@ -131,7 +127,12 @@ describe('computeLearningScore', () => {
       const result = computeLearningScore({
         mark: null,
         progressByMode: [
-          makeProgress({ studyMode: 'flashcard', state: 'review', dueAt: NOW + 1000, repetitions: 3 }),
+          makeProgress({
+            studyMode: 'flashcard',
+            state: 'review',
+            dueAt: NOW + 1000,
+            repetitions: 3,
+          }),
           makeProgress({ studyMode: 'recall', state: 'review', dueAt: NOW + 1000, repetitions: 2 }),
           makeProgress({ studyMode: 'cloze', state: 'learning', repetitions: 1 }),
         ],
@@ -148,8 +149,8 @@ describe('computeLearningScore', () => {
 });
 
 describe('STAGE_META', () => {
-  it('6개 단계 모두 정의', () => {
-    expect(Object.keys(STAGE_META)).toHaveLength(6);
+  it('7개 단계 모두 정의 (mastered 포함)', () => {
+    expect(Object.keys(STAGE_META)).toHaveLength(7);
   });
 
   it('priority가 학습 우선순위 순서 (낮을수록 위)', () => {
@@ -158,5 +159,6 @@ describe('STAGE_META', () => {
     expect(STAGE_META.learning.priority).toBeLessThan(STAGE_META.new.priority);
     expect(STAGE_META.new.priority).toBeLessThan(STAGE_META.completed.priority);
     expect(STAGE_META.completed.priority).toBeLessThan(STAGE_META.known.priority);
+    expect(STAGE_META.known.priority).toBeLessThan(STAGE_META.mastered.priority);
   });
 });

@@ -1,13 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockFetchByUrlSuffix, renderRoutes, WORDS_A1_FIXTURE } from '@/__tests__/router-helpers';
 import { resetContentCache } from '@/content';
 import { resetDb } from '@/db/schema';
-import {
-  mockFetchByUrlSuffix,
-  renderRoutes,
-  WORDS_A1_FIXTURE,
-} from '@/__tests__/router-helpers';
 import { routes } from '@/router';
 
 // react-virtuoso는 jsdom의 ResizeObserver/Intersection을 못 잡아 0px 렌더링.
@@ -49,9 +45,9 @@ describe('Vocabulary route (/vocabulary/:cefr/:cardType)', () => {
     expect(screen.getByText('goodbye')).toBeInTheDocument();
     expect(screen.getByRole('searchbox')).toBeInTheDocument();
 
-    // 단계 필터 chip 7개 (전체 + 6단계)
+    // 단계 필터 chip 8개 (전체 + 7단계 with mastered)
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(7);
+    expect(tabs).toHaveLength(8);
     expect(tabs[0]).toHaveAttribute('aria-selected', 'true'); // 전체 기본 선택
   });
 
@@ -75,10 +71,7 @@ describe('Vocabulary route (/vocabulary/:cefr/:cardType)', () => {
     await userEvent.click(screen.getByTestId('mark-known-w_a1_001'));
     // 정렬 변경으로 노드가 재마운트되므로 매번 testid로 재조회
     await waitFor(() => {
-      expect(screen.getByTestId('mark-known-w_a1_001')).toHaveAttribute(
-        'aria-pressed',
-        'true',
-      );
+      expect(screen.getByTestId('mark-known-w_a1_001')).toHaveAttribute('aria-pressed', 'true');
     });
   });
 

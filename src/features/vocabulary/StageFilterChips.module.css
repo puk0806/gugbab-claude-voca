@@ -16,7 +16,10 @@
   font-size: 12px;
   color: var(--gugbab-color-fg-secondary);
   cursor: pointer;
-  transition: background 120ms, color 120ms, border-color 120ms;
+  transition:
+    background 120ms,
+    color 120ms,
+    border-color 120ms;
 }
 
 .stageChip:hover {
@@ -68,4 +71,7 @@
 }
 .dot-known {
   background: #10b981;
+}
+.dot-mastered {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
 }
