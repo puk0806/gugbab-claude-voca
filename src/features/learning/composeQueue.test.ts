@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { CardType, StudyMode } from '@/shared/types';
 import type { SrsCard } from '@/srs/types';
 import { composeQueue } from './composeQueue';
 
@@ -22,6 +23,28 @@ function makeCard(overrides: Partial<SrsCard> & Pick<SrsCard, 'cardId'>): SrsCar
   };
 }
 
+function callQueue(opts: {
+  progress?: readonly SrsCard[];
+  contentIds: readonly string[];
+  allProgressByCardId?: ReadonlyMap<string, readonly SrsCard[]>;
+  cardType?: CardType;
+  studyMode?: StudyMode;
+  sessionSize?: number;
+  newCardRatio?: number;
+  now?: number;
+}): string[] {
+  return composeQueue({
+    progress: opts.progress ?? [],
+    contentIds: opts.contentIds,
+    allProgressByCardId: opts.allProgressByCardId ?? new Map(),
+    cardType: opts.cardType ?? 'word',
+    studyMode: opts.studyMode ?? 'flashcard',
+    sessionSize: opts.sessionSize ?? 20,
+    newCardRatio: opts.newCardRatio ?? 0.3,
+    now: opts.now ?? NOW,
+  });
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -29,21 +52,14 @@ afterEach(() => {
 describe('composeQueue — 신규 only (진도 0)', () => {
   it('due 0 + new 80, N=20, R=0.3 → 20개 모두 new', () => {
     const contentIds = Array.from({ length: 80 }, (_, i) => `w_a1_${i}`);
-    const queue = composeQueue({
-      progress: [],
-      contentIds,
-      marks: new Map(),
-      sessionSize: 20,
-      newCardRatio: 0.3,
-      now: NOW,
-    });
+    const queue = callQueue({ contentIds });
     expect(queue).toHaveLength(20);
     expect(queue.every((id) => contentIds.includes(id))).toBe(true);
   });
 });
 
 describe('composeQueue — due + new 혼합', () => {
-  it('due 30 + new 80, N=20, R=0.3 → due 14 + new 6 (복습 우선)', () => {
+  it('due 30 + new 80, N=20, R=0.3 → due 14 + new 6', () => {
     const dueProgress = Array.from({ length: 30 }, (_, i) =>
       makeCard({ cardId: `due_${i}`, dueAt: NOW - (i + 1) * DAY }),
     );
@@ -51,66 +67,20 @@ describe('composeQueue — due + new 혼합', () => {
       ...dueProgress.map((p) => p.cardId),
       ...Array.from({ length: 80 }, (_, i) => `new_${i}`),
     ];
-    const queue = composeQueue({
-      progress: dueProgress,
-      contentIds,
-      marks: new Map(),
-      sessionSize: 20,
-      newCardRatio: 0.3,
-      now: NOW,
-    });
-    expect(queue).toHaveLength(20);
-    const dueInQueue = queue.filter((id) => id.startsWith('due_'));
-    const newInQueue = queue.filter((id) => id.startsWith('new_'));
-    expect(dueInQueue).toHaveLength(14);
-    expect(newInQueue).toHaveLength(6);
-  });
-
-  it('due 100 + new 80, N=20, R=0.3 → due 14 + new 6 (정원 유지)', () => {
-    const dueProgress = Array.from({ length: 100 }, (_, i) =>
-      makeCard({ cardId: `due_${i}`, dueAt: NOW - (i + 1) * DAY }),
-    );
-    const contentIds = [
-      ...dueProgress.map((p) => p.cardId),
-      ...Array.from({ length: 80 }, (_, i) => `new_${i}`),
-    ];
-    const queue = composeQueue({
-      progress: dueProgress,
-      contentIds,
-      marks: new Map(),
-      sessionSize: 20,
-      newCardRatio: 0.3,
-      now: NOW,
-    });
+    const queue = callQueue({ progress: dueProgress, contentIds });
     expect(queue).toHaveLength(20);
     expect(queue.filter((id) => id.startsWith('due_'))).toHaveLength(14);
+    expect(queue.filter((id) => id.startsWith('new_'))).toHaveLength(6);
   });
 });
 
 describe('composeQueue — empty', () => {
-  it('due 0 + new 0 → 빈 배열', () => {
-    const queue = composeQueue({
-      progress: [],
-      contentIds: [],
-      marks: new Map(),
-      sessionSize: 20,
-      newCardRatio: 0.3,
-      now: NOW,
-    });
-    expect(queue).toEqual([]);
+  it('빈 입력 → 빈 배열', () => {
+    expect(callQueue({ contentIds: [] })).toEqual([]);
   });
 
   it('contentIds < N 일 때 보유분만 반환', () => {
-    const contentIds = ['a', 'b', 'c'];
-    const queue = composeQueue({
-      progress: [],
-      contentIds,
-      marks: new Map(),
-      sessionSize: 20,
-      newCardRatio: 0.3,
-      now: NOW,
-    });
-    expect(queue).toHaveLength(3);
+    expect(callQueue({ contentIds: ['a', 'b', 'c'] })).toHaveLength(3);
   });
 });
 
@@ -122,87 +92,236 @@ describe('composeQueue — due 정렬 (dueAt 오래된 순)', () => {
       makeCard({ cardId: 'newest', dueAt: NOW - 1 * DAY }),
     ];
     const contentIds = progress.map((p) => p.cardId);
-    const queue = composeQueue({
+    const queue = callQueue({
       progress,
       contentIds,
-      marks: new Map(),
       sessionSize: 2,
       newCardRatio: 0,
-      now: NOW,
     });
-    // dueCount = floor(2 * 1) = 2 → oldest, mid 선택
     expect(queue).toContain('oldest');
     expect(queue).toContain('mid');
     expect(queue).not.toContain('newest');
   });
 });
 
-describe('composeQueue — 마킹 가중치 (M5)', () => {
-  it('unknown 마킹 카드가 신규 풀에서 우선 등장', () => {
-    // unknown 100개 / unmarked 100개 / known 100개 / N=20·R=1 (전부 신규)
-    const contentIds = [
-      ...Array.from({ length: 100 }, (_, i) => `unk_${i}`),
-      ...Array.from({ length: 100 }, (_, i) => `none_${i}`),
-      ...Array.from({ length: 100 }, (_, i) => `kn_${i}`),
-    ];
-    const marks = new Map<string, 'known' | 'unknown'>();
-    for (let i = 0; i < 100; i++) marks.set(`unk_${i}`, 'unknown');
-    for (let i = 0; i < 100; i++) marks.set(`kn_${i}`, 'known');
+describe('composeQueue — word flashcard 큐 (학습 mode, 미학습 위주)', () => {
+  it('가중치 fresh 60 / unknown 25 / reverse(recall good) 10 / mastered 5', () => {
+    // 100 fresh + 100 unknown + 100 reverse(recall good) + 100 mastered(둘 다 good)
+    const contentIds: string[] = [];
+    const allProgress = new Map<string, SrsCard[]>();
 
-    const queue = composeQueue({
-      progress: [],
+    for (let i = 0; i < 100; i++) contentIds.push(`fresh_${i}`);
+    for (let i = 0; i < 100; i++) {
+      const id = `unk_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'again', state: 'new' }),
+      ]);
+    }
+    for (let i = 0; i < 100; i++) {
+      const id = `rev_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+    for (let i = 0; i < 100; i++) {
+      const id = `mas_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'good', state: 'new' }),
+        makeCard({ cardId: id, studyMode: 'flashcard', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+
+    const queue = callQueue({
       contentIds,
-      marks,
-      sessionSize: 20,
+      allProgressByCardId: allProgress,
+      cardType: 'word',
+      studyMode: 'flashcard',
       newCardRatio: 1,
-      now: NOW,
+      sessionSize: 20,
     });
     expect(queue).toHaveLength(20);
-    const unkCount = queue.filter((id) => id.startsWith('unk_')).length;
-    const noneCount = queue.filter((id) => id.startsWith('none_')).length;
-    const knCount = queue.filter((id) => id.startsWith('kn_')).length;
-    // 가중치 70/25/5 → 14 / 5 / 1
-    expect(unkCount).toBe(14);
-    expect(noneCount).toBe(5);
-    expect(knCount).toBe(1);
-  });
-
-  it('known 마킹도 5% 비율로 등장 (자기평가 검증 기회)', () => {
-    const contentIds = Array.from({ length: 100 }, (_, i) => `kn_${i}`);
-    const marks = new Map<string, 'known' | 'unknown'>();
-    for (const id of contentIds) marks.set(id, 'known');
-
-    const queue = composeQueue({
-      progress: [],
-      contentIds,
-      marks,
-      sessionSize: 20,
-      newCardRatio: 1,
-      now: NOW,
-    });
-    // known 100개만 있으니 fallback으로 채워서 20개
-    expect(queue).toHaveLength(20);
+    const fresh = queue.filter((id) => id.startsWith('fresh_')).length;
+    const unk = queue.filter((id) => id.startsWith('unk_')).length;
+    const rev = queue.filter((id) => id.startsWith('rev_')).length;
+    const mas = queue.filter((id) => id.startsWith('mas_')).length;
+    // 가중치 60/25/10/5 → 12/5/2/1
+    expect(fresh).toBe(12);
+    expect(unk).toBe(5);
+    expect(rev).toBe(2);
+    expect(mas).toBe(1);
   });
 });
 
-describe('composeQueue — channel fallback', () => {
-  it('unknown 부족 → unmarked·known으로 보충', () => {
-    const contentIds = [
-      ...Array.from({ length: 5 }, (_, i) => `unk_${i}`), // 부족
-      ...Array.from({ length: 100 }, (_, i) => `none_${i}`),
-    ];
-    const marks = new Map<string, 'known' | 'unknown'>();
-    for (let i = 0; i < 5; i++) marks.set(`unk_${i}`, 'unknown');
+describe('composeQueue — word recall 큐 (검증 mode, flashcard 통과 우선)', () => {
+  it('가중치 reverse(flashcard good) 70 / fresh 25 / unknown 4 / mastered 1', () => {
+    const contentIds: string[] = [];
+    const allProgress = new Map<string, SrsCard[]>();
 
-    const queue = composeQueue({
-      progress: [],
+    for (let i = 0; i < 100; i++) contentIds.push(`fresh_${i}`);
+    for (let i = 0; i < 100; i++) {
+      const id = `unk_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'flashcard', lastRating: 'again', state: 'new' }),
+      ]);
+    }
+    for (let i = 0; i < 100; i++) {
+      const id = `rev_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'flashcard', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+    for (let i = 0; i < 100; i++) {
+      const id = `mas_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'good', state: 'new' }),
+        makeCard({ cardId: id, studyMode: 'flashcard', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+
+    const queue = callQueue({
       contentIds,
-      marks,
-      sessionSize: 20,
+      allProgressByCardId: allProgress,
+      cardType: 'word',
+      studyMode: 'recall',
       newCardRatio: 1,
-      now: NOW,
+      sessionSize: 20,
     });
-    expect(queue).toHaveLength(20); // 부족분 보충됨
+    expect(queue).toHaveLength(20);
+    const fresh = queue.filter((id) => id.startsWith('fresh_')).length;
+    const unk = queue.filter((id) => id.startsWith('unk_')).length;
+    const rev = queue.filter((id) => id.startsWith('rev_')).length;
+    const mas = queue.filter((id) => id.startsWith('mas_')).length;
+    // 70/25/4/1 → 14/5/1/0 (반올림 4% → 1 카드, mastered 1% → 0)
+    expect(rev).toBe(14);
+    expect(fresh).toBe(5);
+    expect(unk).toBe(1);
+    expect(mas).toBe(0);
+  });
+});
+
+describe('composeQueue — sentence (대칭 검증 유도)', () => {
+  it('sentence flashcard 큐: cloze 통과 카드 70% / fresh 25 / unknown 4 / mastered 1', () => {
+    const contentIds: string[] = [];
+    const allProgress = new Map<string, SrsCard[]>();
+
+    for (let i = 0; i < 100; i++) contentIds.push(`fresh_${i}`);
+    for (let i = 0; i < 100; i++) {
+      const id = `unk_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({
+          cardId: id,
+          cardType: 'sentence',
+          studyMode: 'cloze',
+          lastRating: 'again',
+          state: 'new',
+        }),
+      ]);
+    }
+    for (let i = 0; i < 100; i++) {
+      const id = `rev_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({
+          cardId: id,
+          cardType: 'sentence',
+          studyMode: 'cloze',
+          lastRating: 'good',
+          state: 'new',
+        }),
+      ]);
+    }
+    for (let i = 0; i < 100; i++) {
+      const id = `mas_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({
+          cardId: id,
+          cardType: 'sentence',
+          studyMode: 'flashcard',
+          lastRating: 'good',
+          state: 'new',
+        }),
+        makeCard({
+          cardId: id,
+          cardType: 'sentence',
+          studyMode: 'cloze',
+          lastRating: 'good',
+          state: 'new',
+        }),
+      ]);
+    }
+
+    const queue = callQueue({
+      contentIds,
+      allProgressByCardId: allProgress,
+      cardType: 'sentence',
+      studyMode: 'flashcard',
+      newCardRatio: 1,
+      sessionSize: 20,
+    });
+    expect(queue).toHaveLength(20);
+    // 가중치 70/25/4/1 → 14/5/1/0
+    expect(queue.filter((id) => id.startsWith('rev_'))).toHaveLength(14);
+    expect(queue.filter((id) => id.startsWith('fresh_'))).toHaveLength(5);
+    expect(queue.filter((id) => id.startsWith('unk_'))).toHaveLength(1);
+    expect(queue.filter((id) => id.startsWith('mas_'))).toHaveLength(0);
+  });
+
+  it('sentence mastered = flashcard.good && cloze.good (둘 다)', () => {
+    const allProgress = new Map<string, SrsCard[]>([
+      [
+        'card_only_fc',
+        [
+          makeCard({
+            cardId: 'card_only_fc',
+            cardType: 'sentence',
+            studyMode: 'flashcard',
+            lastRating: 'good',
+            state: 'new',
+          }),
+        ],
+      ],
+      [
+        'card_both',
+        [
+          makeCard({
+            cardId: 'card_both',
+            cardType: 'sentence',
+            studyMode: 'flashcard',
+            lastRating: 'good',
+            state: 'new',
+          }),
+          makeCard({
+            cardId: 'card_both',
+            cardType: 'sentence',
+            studyMode: 'cloze',
+            lastRating: 'good',
+            state: 'new',
+          }),
+        ],
+      ],
+    ]);
+    // sentence cloze 큐 — card_only_fc 는 reverse (flashcard 통과만), card_both 는 mastered
+    const contentIds = ['card_only_fc', 'card_both'];
+    const queue = callQueue({
+      contentIds,
+      allProgressByCardId: allProgress,
+      cardType: 'sentence',
+      studyMode: 'cloze',
+      newCardRatio: 1,
+      sessionSize: 2,
+    });
+    // reverse 70% → 1.4 → 1, mastered 1% → 0, fallback 으로 둘 다 노출
+    expect(queue).toHaveLength(2);
+    expect(queue).toContain('card_only_fc');
+    expect(queue).toContain('card_both');
   });
 });
 
@@ -210,22 +329,8 @@ describe('composeQueue — 결정론·격리', () => {
   it('Math.random mock으로 결정론 검증', () => {
     vi.spyOn(Math, 'random').mockReturnValue(0);
     const contentIds = ['a', 'b', 'c'];
-    const queue1 = composeQueue({
-      progress: [],
-      contentIds,
-      marks: new Map(),
-      sessionSize: 3,
-      newCardRatio: 1,
-      now: NOW,
-    });
-    const queue2 = composeQueue({
-      progress: [],
-      contentIds,
-      marks: new Map(),
-      sessionSize: 3,
-      newCardRatio: 1,
-      now: NOW,
-    });
+    const queue1 = callQueue({ contentIds, sessionSize: 3, newCardRatio: 1 });
+    const queue2 = callQueue({ contentIds, sessionSize: 3, newCardRatio: 1 });
     expect(queue1).toEqual(queue2);
   });
 });
