@@ -12,6 +12,11 @@ name: visual-regression
 # baseline 미존재 시(신규 라우트 추가 PR 등) 자동 부트스트랩 하지 않는다 —
 # 사용자가 시각 검토 후 라벨 부여하도록 흐름 유도.
 #
+# Main baseline 보충: PR 브랜치가 main 의 최신 baseline 트리를 가지지 않은 경우
+# (예: 오래된 base 에서 분기) 매번 main 의 baseline 을 '신규 후보'로 잡는 잡음이
+# 발생한다. 이를 막기 위해 compare 전에 main 에서 *PR 에 없는 baseline 파일만*
+# 복사한다 — PR 이 수정/추가한 baseline 은 그대로 유지.
+#
 # sibling 프로젝트(@gugbab/* 모노레포)의 visual-regression.yml 패턴을 단일 앱 컨텍스트로
 # 미러링. Storybook 빌드 단계 + paths-filter / mui-radix 분리는 단순화.
 
@@ -77,6 +82,32 @@ jobs:
       - name: Install Playwright (chromium only)
         run: pnpm exec playwright install --with-deps chromium
 
+      # PR 브랜치가 main 의 최신 baseline 을 가지지 않은 경우 (오래된 base 분기 등)
+      # main 의 baseline 을 'PR 에 없는 파일만' 복사. PR 이 수정/추가한 baseline 은 유지.
+      # 이렇게 하면 main 에 이미 있는 baseline 이 '신규 후보' 로 잡히는 잡음을 막을 수 있다.
+      # 보충된 파일 목록은 /tmp/filled-baseline.txt 에 기록 — accept 모드 commit 전에 제외 처리.
+      - name: Fill missing baseline from origin/main
+        id: fill_baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          set -euo pipefail
+          : > /tmp/filled-baseline.txt
+          git fetch origin main --depth=1 2>/dev/null || true
+          if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+            echo "→ origin/main fetch 실패 — skip"
+            exit 0
+          fi
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            if [ ! -e "$f" ]; then
+              mkdir -p "$(dirname "$f")"
+              git show "origin/main:$f" > "$f"
+              echo "$f" >> /tmp/filled-baseline.txt
+            fi
+          done < <(git ls-tree -r origin/main --name-only -- e2e/visual/__screenshots__/ 2>/dev/null || true)
+          count=$(grep -c . /tmp/filled-baseline.txt 2>/dev/null || echo 0)
+          echo "→ main 에서 보충된 baseline: ${count} files"
+
       - name: Detect baseline existence
         id: baseline
         run: |
@@ -104,6 +135,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # main 에서 보충된 baseline 중 *test:visual:update 후에도 main 과 동일* 한 파일은
+          # PR 이 시각 변경을 만들지 않은 것이므로 working tree 에서 제거 — commit 잡음 방지.
+          # 다른 파일은 PR 이 시각 변경을 만든 것 → 그대로 두고 commit 대상에 포함.
+          if [ -f /tmp/filled-baseline.txt ] && [ -s /tmp/filled-baseline.txt ]; then
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              if git show "origin/main:$f" > /tmp/orig-baseline.png 2>/dev/null; then
+                if cmp -s "$f" /tmp/orig-baseline.png; then
+                  rm -f "$f"
+                fi
+              fi
+            done < /tmp/filled-baseline.txt
+            rm -f /tmp/orig-baseline.png
+          fi
           git add e2e/visual/__screenshots__
           if git diff --cached --quiet; then
             echo "pushed=false" >> $GITHUB_OUTPUT
