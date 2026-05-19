@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
+import styles from './InstallButton.module.css';
 import { IosInstallGuide } from './IosInstallGuide';
 import { useInstallPrompt } from './useInstallPrompt';
-import styles from './InstallButton.module.css';
 
 /**
  * 헤더용 PWA install 버튼.
@@ -28,12 +28,7 @@ export function InstallButton() {
 
   return (
     <>
-      <button
-        type="button"
-        className={styles.button}
-        onClick={handleClick}
-        aria-label="앱 설치"
-      >
+      <button type="button" className={styles.button} onClick={handleClick} aria-label="앱 설치">
         <span className={styles.icon} aria-hidden="true">
           📱
         </span>

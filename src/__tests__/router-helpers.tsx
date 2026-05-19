@@ -4,10 +4,10 @@
  * 라우트 컴포넌트는 loader를 가지고 있어 단독 render가 어렵다.
  * 메모리 라우터 + fetch mock으로 통합 마운트를 도와준다.
  */
-import { render, type RenderResult } from '@testing-library/react';
+import { type RenderResult, render } from '@testing-library/react';
+import type { RouteObject } from 'react-router-dom';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { vi } from 'vitest';
-import type { RouteObject } from 'react-router-dom';
 
 export const MANIFEST_A1_ONLY = {
   buildAt: '2026-05-13T00:00:00Z',
@@ -81,10 +81,7 @@ export function mockFetchByUrlSuffix(map: Record<string, unknown>): void {
   );
 }
 
-export function renderRoutes(
-  routes: RouteObject[],
-  initialPath: string,
-): RenderResult {
+export function renderRoutes(routes: RouteObject[], initialPath: string): RenderResult {
   const router = createMemoryRouter(routes, { initialEntries: [initialPath] });
   return render(<RouterProvider router={router} />);
 }

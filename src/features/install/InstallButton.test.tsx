@@ -63,9 +63,7 @@ describe('<InstallButton>', () => {
   });
 
   it('iOS Safari에서는 "앱 설치" 버튼 노출 + 클릭 시 안내 모달 표시', () => {
-    setUserAgent(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-    );
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     render(<InstallButton />);
     const button = screen.getByRole('button', { name: '앱 설치' });
     expect(button).toBeInTheDocument();
@@ -79,9 +77,7 @@ describe('<InstallButton>', () => {
   });
 
   it('iOS 안내 모달: "닫기" 버튼 클릭 시 모달 닫힘', () => {
-    setUserAgent(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-    );
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     render(<InstallButton />);
     fireEvent.click(screen.getByRole('button', { name: '앱 설치' }));
     fireEvent.click(screen.getByRole('button', { name: '닫기' }));
@@ -89,9 +85,7 @@ describe('<InstallButton>', () => {
   });
 
   it('iOS 안내 모달: ESC 키로 닫힘', () => {
-    setUserAgent(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-    );
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     render(<InstallButton />);
     fireEvent.click(screen.getByRole('button', { name: '앱 설치' }));
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -101,9 +95,7 @@ describe('<InstallButton>', () => {
   });
 
   it('Android Chrome: beforeinstallprompt 이벤트 후 버튼 노출 + 클릭 시 native prompt 호출', async () => {
-    setUserAgent(
-      'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0',
-    );
+    setUserAgent('Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0');
     render(<InstallButton />);
     // 초기엔 unsupported → 버튼 없음
     expect(screen.queryByRole('button', { name: '앱 설치' })).not.toBeInTheDocument();

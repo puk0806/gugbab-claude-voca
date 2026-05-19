@@ -9,10 +9,7 @@ const LEVELS = ['a1', 'a2', 'b1', 'b2', 'c1', 'c2'] as const;
 
 function loadWords(level: string): WordEntry[] {
   try {
-    const raw = readFileSync(
-      join(ROOT, 'public/data/words', `${level}.json`),
-      'utf-8',
-    );
+    const raw = readFileSync(join(ROOT, 'public/data/words', `${level}.json`), 'utf-8');
     return JSON.parse(raw);
   } catch {
     return [];
@@ -21,10 +18,7 @@ function loadWords(level: string): WordEntry[] {
 
 function loadSentences(level: string): SentenceEntry[] {
   try {
-    const raw = readFileSync(
-      join(ROOT, 'public/data/sentences', `${level}.json`),
-      'utf-8',
-    );
+    const raw = readFileSync(join(ROOT, 'public/data/sentences', `${level}.json`), 'utf-8');
     return JSON.parse(raw);
   } catch {
     return [];
@@ -62,11 +56,11 @@ describe('cloze 정합성 (누적 lemma 풀)', () => {
           }
         }
         if (failures.length > 0) {
-          const uniqueWords = [
-            ...new Set(failures.map((f) => f.cloze.toLowerCase())),
-          ].sort();
+          const uniqueWords = [...new Set(failures.map((f) => f.cloze.toLowerCase()))].sort();
           const sample = failures.slice(0, 10);
-          console.error(`${currentLevel} cloze 위반 ${failures.length}건. unique ${uniqueWords.length}개: ${JSON.stringify(uniqueWords)} / 샘플 위치: ${JSON.stringify(sample)}`);
+          console.error(
+            `${currentLevel} cloze 위반 ${failures.length}건. unique ${uniqueWords.length}개: ${JSON.stringify(uniqueWords)} / 샘플 위치: ${JSON.stringify(sample)}`,
+          );
         }
         expect(failures).toEqual([]);
       });

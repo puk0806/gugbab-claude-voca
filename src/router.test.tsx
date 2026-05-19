@@ -51,9 +51,7 @@ describe('router definition', () => {
 
   it('주요 라우트가 모두 정의되어 있다', () => {
     const children = routes[0]?.children ?? [];
-    const paths = children.map((c) =>
-      c.index ? 'index' : c.path === '*' ? 'catchall' : c.path,
-    );
+    const paths = children.map((c) => (c.index ? 'index' : c.path === '*' ? 'catchall' : c.path));
     expect(paths).toContain('level/:cefr');
     expect(paths).toContain('level/:cefr/:cardType');
     expect(paths).toContain('learn/:cefr/:cardType/:studyMode');

@@ -42,12 +42,7 @@ export function IosInstallGuide({ onClose }: IosInstallGuideProps) {
           <h2 id="install-guide-title" className={styles.modalTitle}>
             iPhone에 앱 설치하기
           </h2>
-          <button
-            type="button"
-            className={styles.close}
-            onClick={onClose}
-            aria-label="닫기"
-          >
+          <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">
             ×
           </button>
         </div>
@@ -83,8 +78,8 @@ export function IosInstallGuide({ onClose }: IosInstallGuideProps) {
           </li>
         </ol>
         <p className={styles.note}>
-          ※ Chrome·Whale 등 다른 브라우저는 iOS에서 앱 설치를 지원하지 않아요.
-          반드시 Safari로 접속해 주세요.
+          ※ Chrome·Whale 등 다른 브라우저는 iOS에서 앱 설치를 지원하지 않아요. 반드시 Safari로
+          접속해 주세요.
         </p>
       </div>
     </div>
