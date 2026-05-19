@@ -8,6 +8,9 @@
  *   4. 큐 소진 시 SessionSummary 렌더
  */
 import { type LoaderFunctionArgs, useLoaderData, useParams } from 'react-router-dom';
+import type { SentenceEntry, WordEntry } from '@/content';
+import { loadSentences, loadWords } from '@/content';
+import { getAllProgressByLevel, getDueCards, getNewProgress, listMarksByLevel } from '@/db';
 import { ClozePrompt } from '@/features/cloze';
 import { Flashcard } from '@/features/flashcard';
 import {
@@ -17,52 +20,50 @@ import {
   useLearnSession,
 } from '@/features/learning';
 import { RecallPrompt } from '@/features/recall';
-import { loadSentences, loadWords } from '@/content';
-import type { SentenceEntry, WordEntry } from '@/content';
-import { getDueCards, getNewProgress, listMarksByLevel } from '@/db';
-import type { SrsCard } from '@/srs';
 import { EmptyState } from '@/shared/components';
-import {
-  isCardType,
-  isCefr,
-  isStudyMode,
-  isStudyModeAvailable,
-} from '@/shared/types';
+import { isCardType, isCefr, isStudyMode, isStudyModeAvailable } from '@/shared/types';
+import type { SrsCard } from '@/srs';
 import { useSpeak } from '@/tts';
 import styles from './Learn.module.css';
 
 const DEFAULT_SESSION_SIZE = 20;
 const DEFAULT_NEW_RATIO = 0.3;
 
-export async function learnLoader({
-  params,
-}: LoaderFunctionArgs): Promise<LearnSessionData> {
+export async function learnLoader({ params }: LoaderFunctionArgs): Promise<LearnSessionData> {
   const cefr = params.cefr;
   const cardType = params.cardType;
   const studyMode = params.studyMode;
 
   if (!cefr || !isCefr(cefr)) throw new Response('Invalid level', { status: 404 });
-  if (!cardType || !isCardType(cardType))
-    throw new Response('Invalid card type', { status: 404 });
-  if (!studyMode || !isStudyMode(studyMode))
-    throw new Response('Invalid mode', { status: 404 });
+  if (!cardType || !isCardType(cardType)) throw new Response('Invalid card type', { status: 404 });
+  if (!studyMode || !isStudyMode(studyMode)) throw new Response('Invalid mode', { status: 404 });
   if (!isStudyModeAvailable(cardType, studyMode)) {
     throw new Response('Mode not available for this card type', { status: 404 });
   }
 
-  const content =
-    cardType === 'word' ? await loadWords(cefr) : await loadSentences(cefr);
+  const content = cardType === 'word' ? await loadWords(cefr) : await loadSentences(cefr);
   const due = await getDueCards(studyMode, cardType, cefr, Date.now());
   const newProgress = await getNewProgress(studyMode, cardType, cefr);
   const marks = await listMarksByLevel(cardType, cefr);
+  const allModeProgress = await getAllProgressByLevel(cardType, cefr);
 
   const contentIds = content.map((c) => c.id);
   const progress: SrsCard[] = [...due, ...newProgress];
 
+  // composeQueue 가 cardId 별 다른 mode 통과 여부 판정에 사용
+  const allProgressByCardId = new Map<string, SrsCard[]>();
+  for (const p of allModeProgress) {
+    const arr = allProgressByCardId.get(p.cardId) ?? [];
+    arr.push(p);
+    allProgressByCardId.set(p.cardId, arr);
+  }
+
   const queue = composeQueue({
     progress,
     contentIds,
-    marks,
+    allProgressByCardId,
+    cardType,
+    studyMode,
     sessionSize: DEFAULT_SESSION_SIZE,
     newCardRatio: DEFAULT_NEW_RATIO,
     now: Date.now(),
@@ -71,8 +72,11 @@ export async function learnLoader({
   const cardsById: Record<string, WordEntry | SentenceEntry> = {};
   for (const c of content) cardsById[c.id] = c;
 
-  const marksByCardId: Record<string, 'known' | 'unknown'> = {};
-  for (const [id, mark] of marks.entries()) marksByCardId[id] = mark;
+  const marksByCardId: LearnSessionData['marksByCardId'] = (() => {
+    const m: Record<string, 'known' | 'unknown' | 'mastered'> = {};
+    for (const [id, mark] of marks.entries()) m[id] = mark;
+    return m;
+  })();
 
   const progressByCardId: Record<string, SrsCard> = {};
   for (const p of progress) progressByCardId[p.cardId] = p;
@@ -92,15 +96,8 @@ export function Learn() {
   const data = useLoaderData() as LearnSessionData;
   const params = useParams();
   const { speak, supported: ttsSupported } = useSpeak();
-  const {
-    currentCard,
-    cursor,
-    queueLength,
-    finished,
-    getSummary,
-    handleAnswer,
-    restart,
-  } = useLearnSession(data);
+  const { currentCard, cursor, queueLength, finished, getSummary, handleAnswer, restart } =
+    useLearnSession(data);
 
   if (finished) {
     const sum = getSummary();
@@ -119,11 +116,7 @@ export function Learn() {
   }
 
   const modeLabel =
-    data.studyMode === 'flashcard'
-      ? '플래시카드'
-      : data.studyMode === 'recall'
-        ? '리콜'
-        : '클로즈';
+    data.studyMode === 'flashcard' ? '플래시카드' : data.studyMode === 'recall' ? '리콜' : '클로즈';
 
   return (
     <div className={styles.root}>
@@ -147,11 +140,7 @@ export function Learn() {
         />
       )}
       {data.studyMode === 'recall' && (
-        <RecallPrompt
-          card={currentCard}
-          cardType={data.cardType}
-          onAnswer={handleAnswer}
-        />
+        <RecallPrompt card={currentCard} cardType={data.cardType} onAnswer={handleAnswer} />
       )}
       {data.studyMode === 'cloze' && data.cardType === 'sentence' && (
         <ClozePrompt card={currentCard as SentenceEntry} onAnswer={handleAnswer} />
