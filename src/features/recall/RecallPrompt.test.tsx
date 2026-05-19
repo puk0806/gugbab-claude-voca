@@ -27,6 +27,20 @@ describe('<RecallPrompt>', () => {
     expect(screen.getByRole('textbox', { name: '영어 입력' })).toBeInTheDocument();
   });
 
+  it('정답 글자수 마스크가 초기부터 표시된다 (apple → 5글자 _____)', () => {
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={vi.fn()} />);
+    expect(screen.getByLabelText('정답 글자수 5')).toBeInTheDocument();
+    expect(screen.getByLabelText('정답 글자수 5')).toHaveTextContent('_____');
+  });
+
+  it('초기 마스크는 정답 글자만 _ 로, 힌트 미클릭 시 글자 노출 X', () => {
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={vi.fn()} />);
+    const mask = screen.getByLabelText('정답 글자수 5');
+    // apple → 5글자 모두 _
+    expect(mask.textContent).toBe('_____');
+    expect(mask.textContent).not.toContain('a');
+  });
+
   it('정답 입력 + 제출 시 "정답입니다!" 피드백 + "다음 카드" 버튼 노출, onAnswer 즉시 호출 X', async () => {
     const onAnswer = vi.fn();
     render(<RecallPrompt card={WORD} cardType="word" onAnswer={onAnswer} />);
@@ -141,5 +155,76 @@ describe('<RecallPrompt>', () => {
     expect(screen.queryByText('apple')).not.toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: '영어 입력' })).not.toBeDisabled();
     expect(screen.queryByRole('button', { name: '다음 카드' })).not.toBeInTheDocument();
+  });
+
+  it('힌트 버튼은 첫 제출 전에는 노출 X', () => {
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /힌트/ })).not.toBeInTheDocument();
+  });
+
+  it('오답 1회 후 힌트 버튼 노출 + 클릭 시 마스크 한 글자 노출', async () => {
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={vi.fn()} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '영어 입력' }), 'zzz');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+
+    const hintBtn = screen.getByRole('button', { name: /힌트 \(1\/5\)/ });
+    expect(hintBtn).toBeInTheDocument();
+
+    await userEvent.click(hintBtn);
+    // 마스크: a____ (첫 글자 노출)
+    expect(screen.getByLabelText('정답 글자수 5')).toHaveTextContent('a____');
+    // 버튼 라벨 갱신: (2/5)
+    expect(screen.getByRole('button', { name: /힌트 \(2\/5\)/ })).toBeInTheDocument();
+  });
+
+  it('힌트 점진 노출: 클릭마다 한 글자씩 추가, 모두 노출 시 버튼 사라짐', async () => {
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={vi.fn()} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '영어 입력' }), 'zzz');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+
+    // 5번 클릭 → 모두 노출
+    const masks = ['a____', 'ap___', 'app__', 'appl_', 'apple'];
+    for (let i = 0; i < 5; i++) {
+      await userEvent.click(screen.getByRole('button', { name: /힌트/ }));
+      expect(screen.getByLabelText('정답 글자수 5')).toHaveTextContent(masks[i] as string);
+    }
+    // 모두 노출되었으니 힌트 버튼 사라짐
+    expect(screen.queryByRole('button', { name: /힌트/ })).not.toBeInTheDocument();
+  });
+
+  it('힌트 → 다시 시도 → 정답 입력 흐름 (hintCount 유지)', async () => {
+    const onAnswer = vi.fn();
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={onAnswer} />);
+    // 1차 오답
+    await userEvent.type(screen.getByRole('textbox', { name: '영어 입력' }), 'zzz');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    // 힌트 1회 — 마스크 a____
+    await userEvent.click(screen.getByRole('button', { name: /힌트/ }));
+    expect(screen.getByLabelText('정답 글자수 5')).toHaveTextContent('a____');
+    // 다시 시도 클릭 → 입력 활성, 마스크는 유지
+    await userEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    const input = screen.getByRole('textbox', { name: '영어 입력' });
+    expect(input).not.toBeDisabled();
+    expect(screen.getByLabelText('정답 글자수 5')).toHaveTextContent('a____');
+    // 새 입력 + 정답 제출
+    await userEvent.type(input, 'apple');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    expect(screen.getByText('정답입니다!')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
+    expect(onAnswer).toHaveBeenCalledWith('good');
+  });
+
+  it('힌트 카운트는 카드 변경 시 0으로 리셋', async () => {
+    const { rerender } = render(<RecallPrompt card={WORD} cardType="word" onAnswer={vi.fn()} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '영어 입력' }), 'zzz');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: /힌트/ }));
+    await userEvent.click(screen.getByRole('button', { name: /힌트/ }));
+    expect(screen.getByLabelText('정답 글자수 5')).toHaveTextContent('ap___');
+
+    rerender(<RecallPrompt card={WORD2} cardType="word" onAnswer={vi.fn()} />);
+    // banana 6글자, 마스크 _____
+    expect(screen.getByLabelText('정답 글자수 6')).toHaveTextContent('______');
+    expect(screen.queryByRole('button', { name: /힌트/ })).not.toBeInTheDocument();
   });
 });
