@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SentenceEntry, WordEntry } from '@/content';
-import { upsertProgress } from '@/db';
-import { initialFromMark, safeReview, type SrsCard } from '@/srs';
+import { setMark, upsertProgress } from '@/db';
 import type { CardType, CEFR, SrsRating, StudyMode } from '@/shared/types';
+import { initialFromMark, type SrsCard, safeReview } from '@/srs';
 import { useSessionStore } from '@/store';
 
 export interface LearnSessionData {
@@ -122,6 +122,18 @@ export function useLearnSession(data: LearnSessionData): UseLearnSessionResult {
 
       const { card: updated } = safeReview(base, { rating, now });
       await upsertProgress(updated);
+
+      // 단어장 mark 도 동기 갱신: 알았음(good) → known, 모름(again) → unknown.
+      // 어떤 mode 의 결과든 최신 응답이 mark 를 덮어쓴다.
+      // 사용자가 단어장에서 수동 토글한 mark 도 학습 결과로 덮어쓰는 것이 의도된 동작
+      // (학습 = 진실의 원천).
+      await setMark(
+        currentId,
+        data.cardType,
+        data.level,
+        rating === 'good' ? 'known' : 'unknown',
+        now,
+      );
 
       recordResult(currentId, rating);
       advance();
