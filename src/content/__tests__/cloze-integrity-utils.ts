@@ -393,10 +393,7 @@ export function normalizeToLemma(word: string): string[] {
   return candidates;
 }
 
-export function isClozeWordValid(
-  clozeWord: string,
-  lemmaPool: ReadonlySet<string>,
-): boolean {
+export function isClozeWordValid(clozeWord: string, lemmaPool: ReadonlySet<string>): boolean {
   const w = clozeWord.toLowerCase().replace(/[.,!?;:"]/g, '');
   if (FUNCTION_WORDS.has(w)) return true;
   if (lemmaPool.has(w)) return true;

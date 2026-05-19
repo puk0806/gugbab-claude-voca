@@ -47,7 +47,10 @@ interface SessionState {
   summary: () => SessionSummary;
 }
 
-const INITIAL: Omit<SessionState, 'startSession' | 'recordResult' | 'advance' | 'reset' | 'summary'> = {
+const INITIAL: Omit<
+  SessionState,
+  'startSession' | 'recordResult' | 'advance' | 'reset' | 'summary'
+> = {
   cefr: null,
   cardType: null,
   studyMode: null,

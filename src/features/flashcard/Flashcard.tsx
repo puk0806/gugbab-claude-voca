@@ -8,8 +8,8 @@
  * cardType=sentence면 클로즈 마커가 채워진 영어 + 한국어 표시.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { fillCloze } from '@/content';
 import type { SentenceEntry, WordEntry } from '@/content';
+import { fillCloze } from '@/content';
 import type { SrsRating } from '@/shared/types';
 import styles from './Flashcard.module.css';
 
@@ -100,9 +100,7 @@ export function Flashcard({
             <>
               <div className={styles.korean}>{card.korean}</div>
               {cardType === 'word' && (card as WordEntry).secondaryKorean && (
-                <div className={styles.secondaryKorean}>
-                  {(card as WordEntry).secondaryKorean}
-                </div>
+                <div className={styles.secondaryKorean}>{(card as WordEntry).secondaryKorean}</div>
               )}
             </>
           ) : (

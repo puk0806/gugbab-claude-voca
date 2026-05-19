@@ -5,9 +5,9 @@
  */
 export type { ComposeQueueInput } from './composeQueue';
 export { composeQueue } from './composeQueue';
+export { SessionSummary, type SessionSummaryProps } from './SessionSummary';
 export {
   type LearnSessionData,
   type UseLearnSessionResult,
   useLearnSession,
 } from './useLearnSession';
-export { SessionSummary, type SessionSummaryProps } from './SessionSummary';

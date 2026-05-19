@@ -64,16 +64,21 @@ describe('markRepo (단어장 마킹, M5)', () => {
   });
 
   describe('countMarksByLevel', () => {
-    it('known·unknown 카운트 분리 반환', async () => {
+    it('known·unknown·mastered 카운트 분리 반환', async () => {
       await setMark('w1', 'word', 'A1', 'known', NOW);
       await setMark('w2', 'word', 'A1', 'known', NOW);
       await setMark('w3', 'word', 'A1', 'unknown', NOW);
+      await setMark('w4', 'word', 'A1', 'mastered', NOW);
       const counts = await countMarksByLevel('word', 'A1');
-      expect(counts).toEqual({ known: 2, unknown: 1 });
+      expect(counts).toEqual({ known: 2, unknown: 1, mastered: 1 });
     });
 
-    it('마킹 0개 → 0/0', async () => {
-      expect(await countMarksByLevel('word', 'A1')).toEqual({ known: 0, unknown: 0 });
+    it('마킹 0개 → 0/0/0', async () => {
+      expect(await countMarksByLevel('word', 'A1')).toEqual({
+        known: 0,
+        unknown: 0,
+        mastered: 0,
+      });
     });
   });
 });

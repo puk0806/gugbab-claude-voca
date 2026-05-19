@@ -29,8 +29,8 @@ describe('학습 도메인 타입', () => {
       expect(SRS_RATINGS).toEqual(['again', 'good']);
     });
 
-    it('USER_MARKS = known | unknown (null은 별개로 union)', () => {
-      expect(USER_MARKS).toEqual(['known', 'unknown']);
+    it('USER_MARKS = known | unknown | mastered (null은 별개로 union)', () => {
+      expect(USER_MARKS).toEqual(['known', 'unknown', 'mastered']);
     });
   });
 
@@ -71,8 +71,8 @@ describe('학습 도메인 타입', () => {
       expect(STUDY_MODES_BY_CARD_TYPE.word).toEqual(['flashcard', 'recall']);
     });
 
-    it('sentence는 모든 학습 모드 지원', () => {
-      expect(STUDY_MODES_BY_CARD_TYPE.sentence).toEqual(['flashcard', 'recall', 'cloze']);
+    it('sentence 는 flashcard·cloze 두 모드만 지원 (recall 제거)', () => {
+      expect(STUDY_MODES_BY_CARD_TYPE.sentence).toEqual(['flashcard', 'cloze']);
     });
   });
 
@@ -89,10 +89,13 @@ describe('학습 도메인 타입', () => {
       expect(isStudyModeAvailable('word', 'cloze')).toBe(false);
     });
 
-    it('문장 + 모든 모드 = 가능', () => {
+    it('문장 + flashcard·cloze = 가능', () => {
       expect(isStudyModeAvailable('sentence', 'flashcard')).toBe(true);
-      expect(isStudyModeAvailable('sentence', 'recall')).toBe(true);
       expect(isStudyModeAvailable('sentence', 'cloze')).toBe(true);
+    });
+
+    it('문장 + recall = 불가능 (cloze 가 검증 mode 역할)', () => {
+      expect(isStudyModeAvailable('sentence', 'recall')).toBe(false);
     });
   });
 });

@@ -20,10 +20,7 @@ export interface InfiniteSentinelOptions {
   readonly root?: Element | null;
 }
 
-export function useInfiniteSentinel(
-  onLoadMore: () => void,
-  options: InfiniteSentinelOptions = {},
-) {
+export function useInfiniteSentinel(onLoadMore: () => void, options: InfiniteSentinelOptions = {}) {
   const ref = useRef<HTMLDivElement>(null);
   const callbackRef = useRef(onLoadMore);
 

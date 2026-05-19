@@ -80,27 +80,21 @@ describe('useInstallPrompt', () => {
   });
 
   it('iOS Safari (UA: iPhone)에서는 mode = "ios-guide", canInstall = true', () => {
-    setUserAgent(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-    );
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.mode).toBe('ios-guide');
     expect(result.current.canInstall).toBe(true);
   });
 
   it('iOS Safari + navigator.standalone=true (홈에서 실행)이면 mode = "installed"', () => {
-    setUserAgent(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-    );
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     setStandalone(true);
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.mode).toBe('installed');
   });
 
   it('Chrome/Edge desktop (beforeinstallprompt 이벤트 발생) → mode = "native"', async () => {
-    setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0',
-    );
+    setUserAgent('Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/120.0');
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.mode).toBe('unsupported');
 
@@ -114,9 +108,7 @@ describe('useInstallPrompt', () => {
   });
 
   it('Android Chrome (beforeinstallprompt 이벤트) → mode = "native"', async () => {
-    setUserAgent(
-      'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0',
-    );
+    setUserAgent('Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0');
     const { result } = renderHook(() => useInstallPrompt());
     expect(result.current.mode).toBe('unsupported');
 
@@ -135,9 +127,7 @@ describe('useInstallPrompt', () => {
   });
 
   it('promptInstall() → native 모드에서 deferred.prompt() 호출 + outcome 반환', async () => {
-    setUserAgent(
-      'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0',
-    );
+    setUserAgent('Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0');
     const { result } = renderHook(() => useInstallPrompt());
     const event = createBeforeInstallPromptEvent();
     await act(async () => {
@@ -156,9 +146,7 @@ describe('useInstallPrompt', () => {
   });
 
   it('promptInstall() → ios-guide 모드에서는 null 반환 (caller가 모달 처리)', async () => {
-    setUserAgent(
-      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-    );
+    setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
     const { result } = renderHook(() => useInstallPrompt());
     let outcome: { outcome: 'accepted' | 'dismissed' } | null = { outcome: 'accepted' };
     await act(async () => {
@@ -168,9 +156,7 @@ describe('useInstallPrompt', () => {
   });
 
   it('appinstalled 이벤트 발생 시 → mode = "installed"로 전환', async () => {
-    setUserAgent(
-      'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0',
-    );
+    setUserAgent('Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0');
     const { result } = renderHook(() => useInstallPrompt());
     await act(async () => {
       window.dispatchEvent(createBeforeInstallPromptEvent());

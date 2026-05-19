@@ -95,3 +95,35 @@
 .dot-known {
   background: #10b981;
 }
+.dot-mastered {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.modeBadges {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  list-style: none;
+  padding: 0;
+}
+
+.modeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.modeBadgePassed {
+  background: var(--gugbab-color-success-subtle, #dcfce7);
+  color: var(--gugbab-color-success-base, #16a34a);
+}
+
+.modeBadgeMissed {
+  background: var(--gugbab-color-bg-inset, #f3f4f6);
+  color: var(--gugbab-color-fg-muted, #9ca3af);
+}

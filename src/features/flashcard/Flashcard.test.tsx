@@ -47,9 +47,7 @@ describe('<Flashcard>', () => {
   });
 
   it('카드 id 변경 시 자동 reset (뒤집기 → 새 카드는 다시 앞면)', async () => {
-    const { rerender } = render(
-      <Flashcard card={WORD} cardType="word" onAnswer={vi.fn()} />,
-    );
+    const { rerender } = render(<Flashcard card={WORD} cardType="word" onAnswer={vi.fn()} />);
     await userEvent.click(screen.getByRole('button', { name: '뒤집기' }));
     expect(screen.getByText('안녕하세요')).toBeInTheDocument();
     const NEXT: WordEntry = { ...WORD, id: 'w_a1_002', english: 'goodbye' };
@@ -61,13 +59,7 @@ describe('<Flashcard>', () => {
   it('onSpeak prop이 있으면 스피커 버튼이 노출되고 호출된다', async () => {
     const onSpeak = vi.fn();
     render(
-      <Flashcard
-        card={WORD}
-        cardType="word"
-        onAnswer={vi.fn()}
-        onSpeak={onSpeak}
-        ttsSupported
-      />,
+      <Flashcard card={WORD} cardType="word" onAnswer={vi.fn()} onSpeak={onSpeak} ttsSupported />,
     );
     await userEvent.click(screen.getByRole('button', { name: '영어 발음 듣기' }));
     expect(onSpeak).toHaveBeenCalledWith('hello');

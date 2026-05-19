@@ -73,17 +73,14 @@ describe('useInfiniteSentinel', () => {
 
   it('disabled true면 observer 미생성', () => {
     const onLoadMore = vi.fn();
-    renderHook(() =>
-      useInfiniteSentinel(onLoadMore, { disabled: true }),
-    );
+    renderHook(() => useInfiniteSentinel(onLoadMore, { disabled: true }));
     expect(observers).toHaveLength(0);
   });
 
   it('rootMargin 옵션 전달', () => {
     const onLoadMore = vi.fn();
     const { rerender } = renderHook(
-      ({ rootMargin }: { rootMargin: string }) =>
-        useInfiniteSentinel(onLoadMore, { rootMargin }),
+      ({ rootMargin }: { rootMargin: string }) => useInfiniteSentinel(onLoadMore, { rootMargin }),
       { initialProps: { rootMargin: '500px' } },
     );
     // observer는 ref mount 후 생성 — DOM 마운트 없이는 검증 어려움

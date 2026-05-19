@@ -24,16 +24,17 @@ describe('Mode route (/level/:cefr/:cardType)', () => {
     expect(closeBtn).toBeDisabled();
   });
 
-  it('문장(sentence)에서는 4가지 모드 모두 활성', async () => {
+  it('문장(sentence)은 flashcard + cloze + 단어장 활성, recall 비활성', async () => {
     mockFetchByUrlSuffix({});
     renderRoutes(routes, '/level/A1/sentence');
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /A1 · 문장/ })).toBeInTheDocument();
     });
     expect(screen.getByRole('button', { name: /플래시카드/ })).toBeEnabled();
-    expect(screen.getByRole('button', { name: /리콜/ })).toBeEnabled();
     expect(screen.getByRole('button', { name: /클로즈/ })).toBeEnabled();
     expect(screen.getByRole('button', { name: /단어장/ })).toBeEnabled();
+    // 문장은 검증 mode 로 cloze 만 사용 — recall 은 비활성
+    expect(screen.getByRole('button', { name: /리콜/ })).toBeDisabled();
   });
 
   it('A1 word flashcard에 진도 1건 → 플래시카드 타일에 학습 카드 수', async () => {

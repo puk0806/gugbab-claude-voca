@@ -1,5 +1,5 @@
-@import '@gugbab/tokens/mui.css';
-@import '@gugbab/styled-mui/styles.css';
+@import "@gugbab/tokens/mui.css";
+@import "@gugbab/styled-mui/styles.css";
 
 * {
   box-sizing: border-box;
@@ -13,8 +13,7 @@ body,
 }
 
 body {
-  font-family:
-    'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: var(--gugbab-color-bg-app);
   color: var(--gugbab-color-fg-primary);
   -webkit-font-smoothing: antialiased;
