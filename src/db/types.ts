@@ -7,13 +7,13 @@
  *
  * SrsCard(`@/srs`)는 본 DB의 cardProgress 테이블 row 타입으로 직접 사용.
  */
-import type { CardType, CEFR, StudyMode } from '@/shared/types';
+import type { CardType, CEFR, StudyMode, UserMark } from '@/shared/types';
 
 export interface CardMarkRow {
   readonly cardId: string;
   readonly cardType: CardType;
   readonly level: CEFR;
-  readonly mark: 'known' | 'unknown';
+  readonly mark: Exclude<UserMark, null>;
   readonly markedAt: number;
 }
 

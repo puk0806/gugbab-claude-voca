@@ -2,10 +2,13 @@
  * cardMark 테이블 repository (M5: 단어장 마킹).
  *
  * 마킹은 cardId 단위로 1개 (모드 무관). null 마킹은 row 자체 미존재로 표현 (storage 절약).
+ * UserMark 값: 'known' | 'unknown' | 'mastered' (+ null).
  */
 import type { CardType, CEFR, UserMark } from '@/shared/types';
 import { db } from '../schema';
 import type { CardMarkRow } from '../types';
+
+type NonNullMark = Exclude<UserMark, null>;
 
 /**
  * 단일 카드의 마킹 조회.
@@ -17,14 +20,14 @@ export async function getMark(cardId: string): Promise<UserMark> {
 }
 
 /**
- * 마킹 설정 (known/unknown).
+ * 마킹 설정 (known/unknown/mastered).
  * 동일 cardId의 기존 row를 갱신.
  */
 export async function setMark(
   cardId: string,
   cardType: CardType,
   level: CEFR,
-  mark: 'known' | 'unknown',
+  mark: NonNullMark,
   now: number,
 ): Promise<void> {
   const row: CardMarkRow = { cardId, cardType, level, mark, markedAt: now };
@@ -45,12 +48,12 @@ export async function clearMark(cardId: string): Promise<void> {
 export async function listMarksByLevel(
   cardType: CardType,
   level: CEFR,
-): Promise<Map<string, 'known' | 'unknown'>> {
+): Promise<Map<string, NonNullMark>> {
   const rows = await db.cardMark
     .where('[cardType+level+mark]')
     .between([cardType, level, ''], [cardType, level, '￿'])
     .toArray();
-  const map = new Map<string, 'known' | 'unknown'>();
+  const map = new Map<string, NonNullMark>();
   for (const row of rows) {
     map.set(row.cardId, row.mark);
   }
@@ -63,7 +66,7 @@ export async function listMarksByLevel(
 export async function countMarksByLevel(
   cardType: CardType,
   level: CEFR,
-): Promise<{ known: number; unknown: number }> {
+): Promise<{ known: number; unknown: number; mastered: number }> {
   const known = await db.cardMark
     .where('[cardType+level+mark]')
     .equals([cardType, level, 'known'])
@@ -72,5 +75,9 @@ export async function countMarksByLevel(
     .where('[cardType+level+mark]')
     .equals([cardType, level, 'unknown'])
     .count();
-  return { known, unknown };
+  const mastered = await db.cardMark
+    .where('[cardType+level+mark]')
+    .equals([cardType, level, 'mastered'])
+    .count();
+  return { known, unknown, mastered };
 }

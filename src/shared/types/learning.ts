@@ -20,7 +20,17 @@ export type SrsState = (typeof SRS_STATES)[number];
 export const SRS_RATINGS = ['again', 'good'] as const;
 export type SrsRating = (typeof SRS_RATINGS)[number];
 
-export const USER_MARKS = ['known', 'unknown'] as const;
+/**
+ * 단어장 마킹 4단계:
+ * - 'unknown': 모름 — 마지막 응답이 again 또는 hint 사용
+ * - 'known': 한 mode 만 통과 (학습 mode 또는 검증 mode 한쪽)
+ * - 'mastered': 진짜 졸업
+ *   - word: recall.lastRating === 'good' (한 번만 통과해도 mastered — 검증 mode 자체가 어려움)
+ *   - sentence: flashcard.lastRating === 'good' && cloze.lastRating === 'good' (둘 다 통과)
+ *
+ * null: 미학습 (아무 mode 도 답 안 함)
+ */
+export const USER_MARKS = ['known', 'unknown', 'mastered'] as const;
 export type UserMark = (typeof USER_MARKS)[number] | null;
 
 export function isCardType(value: unknown): value is CardType {
@@ -33,11 +43,16 @@ export function isStudyMode(value: unknown): value is StudyMode {
 
 /**
  * cardType별 사용 가능한 학습 모드.
+ *
+ * - word: flashcard (학습) + recall (검증). recall 한 mode 통과로 mastered 인정.
+ * - sentence: flashcard (학습) + cloze (검증). 두 mode 모두 통과해야 mastered.
+ *
+ * sentence 에서 recall 은 cloze 와 역할 중복이라 제거 — cloze 가 문장 검증 mode.
  * 단어는 클로즈 모드 미지원 (단어 자체가 빈칸이면 리콜과 동일).
  */
 export const STUDY_MODES_BY_CARD_TYPE: Record<CardType, readonly StudyMode[]> = {
   word: ['flashcard', 'recall'],
-  sentence: ['flashcard', 'recall', 'cloze'],
+  sentence: ['flashcard', 'cloze'],
 } as const;
 
 export function isStudyModeAvailable(cardType: CardType, mode: StudyMode): boolean {
