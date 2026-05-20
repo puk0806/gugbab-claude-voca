@@ -192,7 +192,7 @@ describe('<RecallPrompt>', () => {
     expect(screen.queryByRole('button', { name: /힌트/ })).not.toBeInTheDocument();
   });
 
-  it('힌트 → 다시 시도 → 정답 입력 흐름 (hintCount 유지)', async () => {
+  it('힌트 → 다시 시도 → 정답 입력 → "다음 카드" → onAnswer("again") (힌트 사용 시 mastered 인정 X)', async () => {
     const onAnswer = vi.fn();
     render(<RecallPrompt card={WORD} cardType="word" onAnswer={onAnswer} />);
     // 1차 오답
@@ -210,6 +210,16 @@ describe('<RecallPrompt>', () => {
     await userEvent.type(input, 'apple');
     await userEvent.click(screen.getByRole('button', { name: '제출' }));
     expect(screen.getByText('정답입니다!')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
+    // 힌트 사용했으므로 'good' 이 아닌 'again' 으로 호출 — mark='unknown' 결정 유도
+    expect(onAnswer).toHaveBeenCalledWith('again');
+  });
+
+  it('힌트 0회 + 정답만 onAnswer("good") (회귀: hint 안 쓴 정답은 mastered 인정)', async () => {
+    const onAnswer = vi.fn();
+    render(<RecallPrompt card={WORD} cardType="word" onAnswer={onAnswer} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '영어 입력' }), 'apple');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
     await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
     expect(onAnswer).toHaveBeenCalledWith('good');
   });
