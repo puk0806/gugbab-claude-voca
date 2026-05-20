@@ -119,10 +119,12 @@ export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
   }, [letterCount]);
 
   const handleNext = useCallback(() => {
-    // 정답이고 reveal 안 됐으면 'good', 그 외(오답·reveal)는 'again'.
-    const rating: SrsRating = correct === true && !revealed ? 'good' : 'again';
+    // 정답이고 reveal 안 됐고 hint 도 안 썼으면 'good', 그 외(오답·reveal·hint 사용)는 'again'.
+    // hint 를 한 번이라도 누르면 학습자가 *기억으로* 맞춘 게 아니므로 mastered 인정 X (의도된 unknown 처리).
+    const usedHint = hintCount > 0;
+    const rating: SrsRating = correct === true && !revealed && !usedHint ? 'good' : 'again';
     onAnswer(rating);
-  }, [correct, revealed, onAnswer]);
+  }, [correct, revealed, hintCount, onAnswer]);
 
   const inputCls = submitted ? (correct ? styles.correct : styles.incorrect) : '';
   const showCorrectPath = submitted && correct === true;
