@@ -28,7 +28,8 @@ originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
 | 8-1 | **헤더 install prompt 버튼** (useInstallPrompt 훅 · iOS Safari 4단계 안내 모달 · Android/Desktop native prompt · standalone 자동 숨김 · 15/15 단위 테스트) | ✅ 완료 (PR #12 추정) |
 | 8-2 | P2 후속 (Offline 배지 · 콘텐츠 갱신 알림 toast · 다크모드 · streak · 통계 · 세션 종료 요약 · 설정) | ⏳ **다음 작업 후보** |
 | 버그픽스 | **PWA 핀치 줌 차단** (`src/preventZoom.ts` gesture 이벤트 차단 + `touch-action: pan-x pan-y`) — iOS는 user-scalable=no 무시·manipulation은 핀치 허용이 원인 | ✅ 2026-07-16 (`fix/pwa-pinch-zoom-and-hooks-cjs`, PR #22) |
-| 개선 | **추천 큐 진행률 적응** (`composeQueue.ts`) — ① coverage(응답 카드 비율) 기반 신규 비율 0.6→0.3 lerp + word flashcard 가중치 앵커 보간 ② **coverage<50% flashcard 큐에서 통과(good) 카드 완전 숨김** (due·신규 모두, 틀린 카드는 유지, recall/cloze 검증 큐는 예외). 사용자 피드백: "진행률 낮은데 아는 카드만 나온다" | ✅ 2026-07-16 (`feature/adaptive-queue-coverage`) |
+| 개선 | **추천 큐 진행률 적응** (`composeQueue.ts`) — ① coverage(응답 카드 비율) 기반 신규 비율 0.6→0.3 lerp + word flashcard 가중치 앵커 보간 ② **coverage<50% flashcard 큐에서 통과(good) 카드 완전 숨김** (due·신규 모두, 틀린 카드는 유지, recall/cloze 검증 큐는 예외). 사용자 피드백: "진행률 낮은데 아는 카드만 나온다" | ✅ 2026-07-16 (`feature/adaptive-queue-coverage`, PR #23) |
+| 개선 | **카드 상태 배지 + 클로즈 힌트** — ① Learn 상단바에 아는 카드(초록 success)/몰랐던 카드(빨강 danger) 배지 (`cardStatusBadge.ts`, mark 기반) ② 클로즈 빈칸에 글자수 마스크 + 한 글자씩 힌트 (리콜 `buildMask` 를 `learning/answerMask.ts` 로 공용 추출, 힌트 사용 시 정답도 again — PR #20 정책 준수) | ✅ 2026-07-16 (`feature/card-badge-cloze-hint`) |
 | 9 | 콘텐츠 audit·수정 (사용 후 피드백 기반) | — |
 
 ## 콘텐츠 최종 상태 (2026-05-16)
