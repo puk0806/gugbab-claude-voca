@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from '@/App';
+import { preventPinchZoom } from '@/preventZoom';
 import { registerServiceWorker } from '@/pwa';
 import '@/styles/global.css';
 
@@ -15,4 +16,5 @@ createRoot(rootElement).render(
   </StrictMode>,
 );
 
+preventPinchZoom();
 void registerServiceWorker();
