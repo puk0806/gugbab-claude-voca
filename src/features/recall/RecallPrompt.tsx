@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SentenceEntry, WordEntry } from '@/content';
 import { fillCloze } from '@/content';
+import { buildMask, countLetters } from '@/features/learning';
 import type { SrsRating } from '@/shared/types';
 import { isCorrect } from '@/srs';
 import styles from './RecallPrompt.module.css';
@@ -30,32 +31,6 @@ interface RecallPromptProps {
 }
 
 const MAX_RETRIES_BEFORE_REVEAL = 3;
-
-/**
- * 정답 글자수 마스크 생성. 공백은 그대로, 글자는 revealedCount 이내면 노출.
- */
-function buildMask(expected: string, revealedCount: number): string {
-  let result = '';
-  let letterIndex = 0;
-  for (const ch of expected) {
-    if (ch === ' ') {
-      result += ' ';
-    } else {
-      result += letterIndex < revealedCount ? ch : '_';
-      letterIndex += 1;
-    }
-  }
-  return result;
-}
-
-/** 마스킹 대상 글자 수 (공백 제외). */
-function countLetters(expected: string): number {
-  let n = 0;
-  for (const ch of expected) {
-    if (ch !== ' ') n += 1;
-  }
-  return n;
-}
 
 export function RecallPrompt({ card, cardType, onAnswer }: RecallPromptProps) {
   const [input, setInput] = useState('');

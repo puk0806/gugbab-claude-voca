@@ -25,3 +25,26 @@
   font-weight: 600;
   font-size: 12px;
 }
+
+.chipGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statusChip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.statusKnown {
+  background: var(--gugbab-color-success-subtle);
+  color: var(--gugbab-color-success-base);
+}
+
+.statusUnknown {
+  background: var(--gugbab-color-danger-subtle);
+  color: var(--gugbab-color-danger-base);
+}

@@ -154,4 +154,49 @@ describe('<ClozePrompt>', () => {
     expect(screen.getByRole('textbox', { name: '빈칸 1 입력' })).not.toBeDisabled();
     expect(screen.queryByRole('button', { name: '다음 카드' })).not.toBeInTheDocument();
   });
+
+  it('빈칸에 정답 글자수 마스크가 표시된다 (go → __)', () => {
+    render(<ClozePrompt card={SENTENCE} onAnswer={vi.fn()} />);
+    const blank = screen.getByRole('img', { name: '빈칸 1 — 글자수 2' });
+    expect(blank).toHaveTextContent('__');
+  });
+
+  it('오답 1회 후 힌트 버튼 노출, 클릭 시 앞 글자부터 1글자씩 마스크 노출', async () => {
+    render(<ClozePrompt card={SENTENCE2} onAnswer={vi.fn()} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'wrong');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+
+    // teacher = 7글자
+    const hintBtn = screen.getByRole('button', { name: '힌트 (1/7)' });
+    await userEvent.click(hintBtn);
+
+    // 다시 시도로 입력을 비우면 마스크가 보임 — 첫 글자 t 노출
+    await userEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    const blank = screen.getByRole('img', { name: '빈칸 1 — 글자수 7' });
+    expect(blank).toHaveTextContent('t______');
+    expect(screen.queryByRole('button', { name: '힌트 (2/7)' })).not.toBeInTheDocument();
+  });
+
+  it('힌트 사용 후 정답이어도 onAnswer("again") — mastered 인정 X', async () => {
+    const onAnswer = vi.fn();
+    render(<ClozePrompt card={SENTENCE} onAnswer={onAnswer} />);
+    // 오답 → 힌트 사용
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'went');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '힌트 (1/2)' }));
+    // 다시 시도 → 정답 입력
+    await userEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'go');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    await userEvent.click(screen.getByRole('button', { name: '다음 카드' }));
+    expect(onAnswer).toHaveBeenCalledWith('again');
+  });
+
+  it('빈칸 2개 카드: 힌트 상한은 가장 긴 빈칸 글자 수(school=6)', async () => {
+    render(<ClozePrompt card={MULTI} onAnswer={vi.fn()} />);
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 1 입력' }), 'x');
+    await userEvent.type(screen.getByRole('textbox', { name: '빈칸 2 입력' }), 'y');
+    await userEvent.click(screen.getByRole('button', { name: '제출' }));
+    expect(screen.getByRole('button', { name: '힌트 (1/6)' })).toBeInTheDocument();
+  });
 });

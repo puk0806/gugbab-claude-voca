@@ -15,6 +15,7 @@ import { ClozePrompt } from '@/features/cloze';
 import { Flashcard } from '@/features/flashcard';
 import {
   composeQueue,
+  getCardStatusBadge,
   type LearnSessionData,
   SessionSummary,
   useLearnSession,
@@ -117,6 +118,7 @@ export function Learn() {
 
   const modeLabel =
     data.studyMode === 'flashcard' ? '플래시카드' : data.studyMode === 'recall' ? '리콜' : '클로즈';
+  const statusBadge = getCardStatusBadge(data.marksByCardId[currentCard.id]);
 
   return (
     <div className={styles.root}>
@@ -127,7 +129,18 @@ export function Learn() {
         <span className={styles.progress}>
           {cursor + 1} / {queueLength}
         </span>
-        <span className={styles.modeChip}>{modeLabel}</span>
+        <span className={styles.chipGroup}>
+          {statusBadge && (
+            <span
+              className={`${styles.statusChip} ${
+                statusBadge.tone === 'known' ? styles.statusKnown : styles.statusUnknown
+              }`}
+            >
+              {statusBadge.label}
+            </span>
+          )}
+          <span className={styles.modeChip}>{modeLabel}</span>
+        </span>
       </div>
 
       {data.studyMode === 'flashcard' && (

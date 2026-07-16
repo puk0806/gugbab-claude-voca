@@ -8,15 +8,20 @@
  *
  * 흐름 (Recall 과 동일 UX):
  *   - 정답: "정답입니다!" 피드백 + "다음 카드" 버튼 (사용자가 명시적으로 진행)
- *   - 오답: "틀렸어요" 피드백 + "다시 시도" / "정답 보기"
+ *   - 오답: "틀렸어요" 피드백 + "다시 시도" / "힌트" (오답 1회 이상) / "정답 보기"
+ *     - "힌트": 각 빈칸 마스크에서 앞 글자부터 1글자씩 점진 노출 (Recall 과 동일)
  *     - "정답 보기": 정답 노출 + "다음 카드" (advance는 사용자 클릭 시점)
  *     - 3회 연속 오답 시 자동으로 정답보기 모드 (advance 보류)
+ *
+ * 빈칸에는 입력 전까지 *정답 글자수 마스크* 가 노출된다 (Recall 과 동일한 추측 도움).
+ * 힌트를 한 번이라도 쓰면 정답이어도 'again' — 기억으로 맞춘 게 아니므로 mastered 인정 X.
  *
  * `onAnswer` 호출 시점은 항상 "다음 카드" 버튼 클릭 — Recall 과 일관.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SentenceEntry } from '@/content';
 import { parseCloze } from '@/content';
+import { buildMask, countLetters } from '@/features/learning';
 import type { SrsRating } from '@/shared/types';
 import { isAllCorrect } from '@/srs';
 import styles from './ClozePrompt.module.css';
@@ -36,7 +41,14 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
   const [correct, setCorrect] = useState<boolean | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [hintCount, setHintCount] = useState(0);
   const firstInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 힌트 상한 = 가장 긴 빈칸의 글자 수 (힌트 1회 = 모든 빈칸에서 1글자씩 노출)
+  const maxLetterCount = useMemo(
+    () => expecteds.reduce((max, e) => Math.max(max, countLetters(e)), 0),
+    [expecteds],
+  );
 
   // 카드 변경 시 리셋
   // biome-ignore lint/correctness/useExhaustiveDependencies: card.id 변경 시점에 reset
@@ -46,6 +58,7 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
     setCorrect(null);
     setRevealed(false);
     setAttempts(0);
+    setHintCount(0);
     firstInputRef.current?.focus();
   }, [card.id, expecteds]);
 
@@ -79,10 +92,17 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
     setRevealed(true);
   }, []);
 
+  const handleHint = useCallback(() => {
+    // hintCount 만 갱신 — 추가 힌트는 연속 클릭으로. 입력 재시도는 [다시 시도] 클릭.
+    setHintCount((c) => Math.min(c + 1, maxLetterCount));
+  }, [maxLetterCount]);
+
   const handleNext = useCallback(() => {
-    const rating: SrsRating = correct === true && !revealed ? 'good' : 'again';
+    // 정답이고 reveal 안 됐고 hint 도 안 썼으면 'good' — Recall 과 동일 정책.
+    const usedHint = hintCount > 0;
+    const rating: SrsRating = correct === true && !revealed && !usedHint ? 'good' : 'again';
     onAnswer(rating);
-  }, [correct, revealed, onAnswer]);
+  }, [correct, revealed, hintCount, onAnswer]);
 
   const updateInput = (index: number, value: string): void => {
     setInputs((prev) => {
@@ -107,9 +127,9 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
                 <span
                   className={`${styles.blank} ${inputs[i] ? styles.filled : ''}`}
                   role="img"
-                  aria-label={`빈칸 ${i + 1}`}
+                  aria-label={`빈칸 ${i + 1} — 글자수 ${countLetters(expecteds[i] ?? '')}`}
                 >
-                  {revealed ? expecteds[i] : inputs[i] || '_____'}
+                  {revealed ? expecteds[i] : inputs[i] || buildMask(expecteds[i] ?? '', hintCount)}
                 </span>
               )}
             </span>
@@ -195,6 +215,11 @@ export function ClozePrompt({ card, onAnswer }: ClozePromptProps) {
             <button type="button" className={styles.action} onClick={handleRetry}>
               다시 시도
             </button>
+            {hintCount < maxLetterCount && (
+              <button type="button" className={styles.action} onClick={handleHint}>
+                힌트 ({hintCount + 1}/{maxLetterCount})
+              </button>
+            )}
             <button
               type="button"
               className={`${styles.action} ${styles.primary}`}
