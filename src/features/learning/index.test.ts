@@ -9,7 +9,10 @@ describe('features/learning public API (barrel)', () => {
   it('public API 심볼 명시 검증', () => {
     expect(Object.keys(PublicApi).sort()).toEqual([
       'SessionSummary',
+      'buildMask',
       'composeQueue',
+      'countLetters',
+      'getCardStatusBadge',
       'useLearnSession',
     ]);
   });
