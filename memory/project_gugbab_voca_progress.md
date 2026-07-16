@@ -27,7 +27,8 @@ originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
 | 7 | A2~C2 콘텐츠 확장 (신규 2,338단어 + 900문장 · cloze 정합성 자동 vitest test · 5개 검증 보고서) | ✅ 완료 (PR #11 추정) |
 | 8-1 | **헤더 install prompt 버튼** (useInstallPrompt 훅 · iOS Safari 4단계 안내 모달 · Android/Desktop native prompt · standalone 자동 숨김 · 15/15 단위 테스트) | ✅ 완료 (PR #12 추정) |
 | 8-2 | P2 후속 (Offline 배지 · 콘텐츠 갱신 알림 toast · 다크모드 · streak · 통계 · 세션 종료 요약 · 설정) | ⏳ **다음 작업 후보** |
-| 버그픽스 | **PWA 핀치 줌 차단** (`src/preventZoom.ts` gesture 이벤트 차단 + `touch-action: pan-x pan-y`) — iOS는 user-scalable=no 무시·manipulation은 핀치 허용이 원인 | ✅ 2026-07-16 (`fix/pwa-pinch-zoom-and-hooks-cjs`) |
+| 버그픽스 | **PWA 핀치 줌 차단** (`src/preventZoom.ts` gesture 이벤트 차단 + `touch-action: pan-x pan-y`) — iOS는 user-scalable=no 무시·manipulation은 핀치 허용이 원인 | ✅ 2026-07-16 (`fix/pwa-pinch-zoom-and-hooks-cjs`, PR #22) |
+| 개선 | **추천 큐 진행률 적응** (`composeQueue.ts`) — ① coverage(응답 카드 비율) 기반 신규 비율 0.6→0.3 lerp + word flashcard 가중치 앵커 보간 ② **coverage<50% flashcard 큐에서 통과(good) 카드 완전 숨김** (due·신규 모두, 틀린 카드는 유지, recall/cloze 검증 큐는 예외). 사용자 피드백: "진행률 낮은데 아는 카드만 나온다" | ✅ 2026-07-16 (`feature/adaptive-queue-coverage`) |
 | 9 | 콘텐츠 audit·수정 (사용 후 피드백 기반) | — |
 
 ## 콘텐츠 최종 상태 (2026-05-16)
