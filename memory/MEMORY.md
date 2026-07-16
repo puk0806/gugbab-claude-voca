@@ -1,0 +1,13 @@
+- [gugbab-voca 프로젝트 개요](project_gugbab_voca.md) — 영어 회화 단어·문장 학습 PWA, 본인 1인용, PRD 확정·기술 스택 확정
+- [gugbab-voca 진행 상태](project_gugbab_voca_progress.md) — Phase 0~7 완료(PWA 배포 + 전 레벨 콘텐츠), 다음=Phase 8 P2 보강. 전 레벨 단어 2,987 / 문장 1,150 / cloze 정합성 100% / 배포 gugbab-claude-voca.vercel.app
+- [gugbab-voca 미결 사항](project_gugbab_voca_open_questions.md) — SRS 알고리즘·콘텐츠 시드 등 7개, 다음 단계 진입 전 2개만 결정 필요
+- [VR 워크플로우 운영 정보](reference_vr_workflow.md) — visual-regression.yml 동작·accept-baseline 라벨·main 보호 룰·vrt-snapshots ruleset
+- [주요 경로 참조](reference_paths.md) — PRD·스킬 명세·UI 패키지 위치
+- [사용자 협업 패턴](feedback_user_collab_style.md) — 요구사항을 단계적으로 좁히는 스타일·"진짜 불필요한 것만" 보수 원칙
+- [작업 워크플로우 룰](feedback_workflow_rules.md) — main 직접 커밋 금지·feature 브랜치 + PR·UI 산출물부터 sibling 프로젝트 VR 패턴 적용
+- [PR 생성·머지 권한](feedback_pr_merge_authority.md) — Claude는 commit + push까지만, PR 생성·머지는 모두 사용자가 직접 (2026-05-10 갱신)
+- [의존성 정책](feedback_zero_dependency_principle.md) — 대중적 표준 lib OK·@gugbab/* OK·lodash류 bloat 회피·애매하면 사용자에게 질문
+- [커밋·푸시 전 작업 보고 필수](feedback_pre_commit_report.md) — 모든 commit/push 직전 변경 파일·핵심 결정·미해결 항목 보고 후 사용자 승인 대기
+- [코드 = 테스트 한 세트](feedback_test_paired_with_code.md) — 테스트 없는 코드 머지 금지. 코드 + 테스트는 같은 PR/커밋. 환경 설정은 예외
+- [콘텐츠 출처 답습 흔적 제거](feedback_content_origin_concealment.md) — Unit/DAY/책 단원명 박지 말 것. 학술·정부 자료 출처만 + 언어학적 재구성
+- [훅 .cjs 필수](project_hooks_cjs_requirement.md) — 이 레포는 type:module이라 훅 .js 금지. 00_gugbab-claude sync 시 .js로 덮이면 require 에러 재발
