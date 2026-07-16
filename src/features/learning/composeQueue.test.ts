@@ -58,19 +58,145 @@ describe('composeQueue — 신규 only (진도 0)', () => {
   });
 });
 
-describe('composeQueue — due + new 혼합', () => {
-  it('due 30 + new 80, N=20, R=0.3 → due 14 + new 6', () => {
+describe('composeQueue — due + new 혼합 (진행률 적응)', () => {
+  it('진행률 낮음(27%): 틀린 due 30 + new 80, N=20, R=0.3 → 신규 비율 상향으로 due 9 + new 11', () => {
+    // 50% 미만에선 통과(good) due 는 숨겨지므로, 비율 검증은 틀린(again) due 로 구성
     const dueProgress = Array.from({ length: 30 }, (_, i) =>
-      makeCard({ cardId: `due_${i}`, dueAt: NOW - (i + 1) * DAY }),
+      makeCard({
+        cardId: `due_${i}`,
+        dueAt: NOW - (i + 1) * DAY,
+        state: 'relearning',
+        lastRating: 'again',
+      }),
     );
     const contentIds = [
       ...dueProgress.map((p) => p.cardId),
       ...Array.from({ length: 80 }, (_, i) => `new_${i}`),
     ];
-    const queue = callQueue({ progress: dueProgress, contentIds });
+    // coverage = 30/110 ≈ 0.27 → 유효 R = 0.6 - 0.3×0.27 ≈ 0.52 → due floor(20×0.48) = 9
+    const allProgress = new Map(dueProgress.map((p) => [p.cardId, [p]]));
+    const queue = callQueue({
+      progress: dueProgress,
+      contentIds,
+      allProgressByCardId: allProgress,
+    });
+    expect(queue).toHaveLength(20);
+    expect(queue.filter((id) => id.startsWith('due_'))).toHaveLength(9);
+    expect(queue.filter((id) => id.startsWith('new_'))).toHaveLength(11);
+  });
+
+  it('진행률 100%: due 30 + 통과 80, N=20, R=0.3 → 현행 due 14 + new 6 으로 수렴', () => {
+    const dueProgress = Array.from({ length: 30 }, (_, i) =>
+      makeCard({ cardId: `due_${i}`, dueAt: NOW - (i + 1) * DAY }),
+    );
+    const passedIds = Array.from({ length: 80 }, (_, i) => `new_${i}`);
+    const contentIds = [...dueProgress.map((p) => p.cardId), ...passedIds];
+    // 모든 카드에 응답 이력 → coverage = 1 → 유효 R = 0.3 (기존 동작)
+    const allProgress = new Map<string, SrsCard[]>(dueProgress.map((p) => [p.cardId, [p]]));
+    for (const id of passedIds) {
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+    const queue = callQueue({
+      progress: dueProgress,
+      contentIds,
+      allProgressByCardId: allProgress,
+    });
     expect(queue).toHaveLength(20);
     expect(queue.filter((id) => id.startsWith('due_'))).toHaveLength(14);
     expect(queue.filter((id) => id.startsWith('new_'))).toHaveLength(6);
+  });
+});
+
+describe('composeQueue — 통과 카드 숨김 (진행률 50% 미만, flashcard 큐)', () => {
+  it('통과(good) due 8개는 전부 숨겨지고 큐가 신규로만 채워진다', () => {
+    // "통과 8개" 시나리오 — coverage 8/88 ≈ 9%
+    const passedDue = Array.from({ length: 8 }, (_, i) =>
+      makeCard({ cardId: `due_${i}`, dueAt: NOW - DAY }),
+    );
+    const contentIds = [
+      ...passedDue.map((p) => p.cardId),
+      ...Array.from({ length: 80 }, (_, i) => `new_${i}`),
+    ];
+    const allProgress = new Map(passedDue.map((p) => [p.cardId, [p]]));
+    const queue = callQueue({
+      progress: passedDue,
+      contentIds,
+      allProgressByCardId: allProgress,
+    });
+    expect(queue).toHaveLength(20);
+    expect(queue.filter((id) => id.startsWith('due_'))).toHaveLength(0);
+    expect(queue.filter((id) => id.startsWith('new_'))).toHaveLength(20);
+  });
+
+  it('틀린(again) due 는 숨기지 않는다 — 통과 8 숨김 + 틀린 3 유지', () => {
+    const passedDue = Array.from({ length: 8 }, (_, i) =>
+      makeCard({ cardId: `pass_${i}`, dueAt: NOW - DAY }),
+    );
+    const failedDue = Array.from({ length: 3 }, (_, i) =>
+      makeCard({
+        cardId: `fail_${i}`,
+        dueAt: NOW - DAY,
+        state: 'relearning',
+        lastRating: 'again',
+      }),
+    );
+    const progress = [...passedDue, ...failedDue];
+    const contentIds = [
+      ...progress.map((p) => p.cardId),
+      ...Array.from({ length: 80 }, (_, i) => `new_${i}`),
+    ];
+    const allProgress = new Map(progress.map((p) => [p.cardId, [p]]));
+    const queue = callQueue({ progress, contentIds, allProgressByCardId: allProgress });
+    expect(queue).toHaveLength(20);
+    expect(queue.filter((id) => id.startsWith('pass_'))).toHaveLength(0);
+    expect(queue.filter((id) => id.startsWith('fail_'))).toHaveLength(3);
+    expect(queue.filter((id) => id.startsWith('new_'))).toHaveLength(17);
+  });
+
+  it('검증 큐(word recall)는 50% 미만에도 통과 카드가 그대로 나온다', () => {
+    // flashcard 통과 100 + fresh 900 → coverage 0.1, recall 큐
+    const contentIds: string[] = [];
+    const allProgress = new Map<string, SrsCard[]>();
+    for (let i = 0; i < 900; i++) contentIds.push(`fresh_${i}`);
+    for (let i = 0; i < 100; i++) {
+      const id = `rev_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'flashcard', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+    const queue = callQueue({
+      contentIds,
+      allProgressByCardId: allProgress,
+      cardType: 'word',
+      studyMode: 'recall',
+      newCardRatio: 1,
+      sessionSize: 20,
+    });
+    expect(queue).toHaveLength(20);
+    // 고정 가중치 reverse 70% → 14장 (숨김 미적용)
+    expect(queue.filter((id) => id.startsWith('rev_'))).toHaveLength(14);
+  });
+
+  it('진행률 50% 이상이면 통과 due 도 정상 노출된다', () => {
+    // 통과 due 30 + fresh 20 → coverage 30/50 = 0.6 (≥ 0.5)
+    const passedDue = Array.from({ length: 30 }, (_, i) =>
+      makeCard({ cardId: `due_${i}`, dueAt: NOW - (i + 1) * DAY }),
+    );
+    const contentIds = [
+      ...passedDue.map((p) => p.cardId),
+      ...Array.from({ length: 20 }, (_, i) => `new_${i}`),
+    ];
+    const allProgress = new Map(passedDue.map((p) => [p.cardId, [p]]));
+    const queue = callQueue({
+      progress: passedDue,
+      contentIds,
+      allProgressByCardId: allProgress,
+    });
+    // coverage 0.6 → 유효 R = 0.6-0.3×0.6 = 0.42 → due floor(20×0.58) = 11
+    expect(queue.filter((id) => id.startsWith('due_'))).toHaveLength(11);
   });
 });
 
@@ -95,6 +221,8 @@ describe('composeQueue — due 정렬 (dueAt 오래된 순)', () => {
     const queue = callQueue({
       progress,
       contentIds,
+      // coverage = 1 → R=0 그대로 (전량 due)
+      allProgressByCardId: new Map(progress.map((p) => [p.cardId, [p]])),
       sessionSize: 2,
       newCardRatio: 0,
     });
@@ -105,7 +233,53 @@ describe('composeQueue — due 정렬 (dueAt 오래된 순)', () => {
 });
 
 describe('composeQueue — word flashcard 큐 (학습 mode, 미학습 위주)', () => {
-  it('가중치 fresh 60 / unknown 25 / reverse(recall good) 10 / mastered 5', () => {
+  it('진행률 10%: fresh 우대 (16/3/1/0) — coverage 앵커 0.8/0.15/0.04/0.01 쪽으로 보간', () => {
+    // 900 fresh + 40 unknown + 40 reverse + 20 mastered = 1000, coverage = 0.1
+    const contentIds: string[] = [];
+    const allProgress = new Map<string, SrsCard[]>();
+
+    for (let i = 0; i < 900; i++) contentIds.push(`fresh_${i}`);
+    for (let i = 0; i < 40; i++) {
+      const id = `unk_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'again', state: 'new' }),
+      ]);
+    }
+    for (let i = 0; i < 40; i++) {
+      const id = `rev_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+    for (let i = 0; i < 20; i++) {
+      const id = `mas_${i}`;
+      contentIds.push(id);
+      allProgress.set(id, [
+        makeCard({ cardId: id, studyMode: 'recall', lastRating: 'good', state: 'new' }),
+        makeCard({ cardId: id, studyMode: 'flashcard', lastRating: 'good', state: 'new' }),
+      ]);
+    }
+
+    const queue = callQueue({
+      contentIds,
+      allProgressByCardId: allProgress,
+      cardType: 'word',
+      studyMode: 'flashcard',
+      newCardRatio: 1,
+      sessionSize: 20,
+    });
+    expect(queue).toHaveLength(20);
+    // lerp(coverage 0.1): fresh 0.78→16, unknown 0.16→3
+    // 50% 미만이라 통과 클래스(reverse·both)는 숨김 → 잔여 1장은 fresh/unknown fallback
+    expect(queue.filter((id) => id.startsWith('fresh_')).length).toBeGreaterThanOrEqual(16);
+    expect(queue.filter((id) => id.startsWith('unk_')).length).toBeGreaterThanOrEqual(3);
+    expect(queue.filter((id) => id.startsWith('rev_'))).toHaveLength(0);
+    expect(queue.filter((id) => id.startsWith('mas_'))).toHaveLength(0);
+  });
+
+  it('진행률 75%: 가중치 fresh 65 / unknown 22.5 / reverse 8.5 / mastered 4 로 보간', () => {
     // 100 fresh + 100 unknown + 100 reverse(recall good) + 100 mastered(둘 다 good)
     const contentIds: string[] = [];
     const allProgress = new Map<string, SrsCard[]>();
@@ -147,11 +321,12 @@ describe('composeQueue — word flashcard 큐 (학습 mode, 미학습 위주)', 
     const unk = queue.filter((id) => id.startsWith('unk_')).length;
     const rev = queue.filter((id) => id.startsWith('rev_')).length;
     const mas = queue.filter((id) => id.startsWith('mas_')).length;
-    // 가중치 60/25/10/5 → 12/5/2/1
-    expect(fresh).toBe(12);
+    // coverage 0.75 보간: fresh 0.65→13, unknown 0.225→5, reverse 0.085→2 (여기서 20 도달)
+    // bothPassed 0.04→1 은 cap 에서 잘림 (우선순위 최하)
+    expect(fresh).toBe(13);
     expect(unk).toBe(5);
     expect(rev).toBe(2);
-    expect(mas).toBe(1);
+    expect(mas).toBe(0);
   });
 });
 
