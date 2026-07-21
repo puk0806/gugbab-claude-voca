@@ -6,6 +6,9 @@
 
 // Persistence
 export { getStorageEstimate, isPersistent, requestPersistentStorage } from './persistence';
+// chatRepo
+export type { AppendChatMessageInput } from './repository/chatRepo';
+export { appendChatMessage, clearChatMessages, listChatMessages } from './repository/chatRepo';
 // markRepo
 export {
   clearMark,
@@ -22,6 +25,7 @@ export {
   getDueCards,
   getNewProgress,
   getProgress,
+  getProgressSummariesByType,
   getProgressSummary,
   upsertProgress,
 } from './repository/progressRepo';
@@ -45,5 +49,11 @@ export {
 // Schema (테스트만 직접 사용 권장)
 export { db, GugbabVocaDB } from './schema';
 // Row 타입 + 설정 카탈로그
-export type { AppSettingRow, CardMarkRow, SessionLogRow, SettingKey } from './types';
+export type {
+  AppSettingRow,
+  CardMarkRow,
+  ChatMessageRow,
+  SessionLogRow,
+  SettingKey,
+} from './types';
 export { SETTING_DEFAULTS, SETTING_KEYS } from './types';

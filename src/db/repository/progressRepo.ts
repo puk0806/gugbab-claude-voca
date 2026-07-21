@@ -112,3 +112,31 @@ export async function getProgressSummary(
   const progress = await getAllProgressByLevel(cardType, level);
   return summarizeProgress({ totalContent, progress, now });
 }
+
+/**
+ * cardType 전체를 한 번만 조회해 레벨별로 집계 (Home·CardTypeHome loader 용).
+ * 레벨마다 getProgressSummary 를 호출하면 같은 cardType 인덱스를 레벨 수만큼
+ * 반복 풀스캔하므로, 단일 조회 + 메모리 파티션으로 I/O 를 1/6 로 줄인다.
+ */
+export async function getProgressSummariesByType(
+  cardType: CardType,
+  totalByLevel: Readonly<Record<CEFR, number>>,
+  now: number,
+): Promise<Record<CEFR, ProgressSummary>> {
+  const rows = await db.cardProgress.where('cardType').equals(cardType).toArray();
+  const byLevel = new Map<CEFR, SrsCard[]>();
+  for (const row of rows) {
+    const arr = byLevel.get(row.level) ?? [];
+    arr.push(row);
+    byLevel.set(row.level, arr);
+  }
+  const result = {} as Record<CEFR, ProgressSummary>;
+  for (const level of Object.keys(totalByLevel) as CEFR[]) {
+    result[level] = summarizeProgress({
+      totalContent: totalByLevel[level],
+      progress: byLevel.get(level) ?? [],
+      now,
+    });
+  }
+  return result;
+}

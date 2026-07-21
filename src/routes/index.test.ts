@@ -5,8 +5,9 @@ describe('routes barrel', () => {
   it('모든 라우트 컴포넌트와 loader가 export된다', () => {
     expect(typeof barrel.Home).toBe('function');
     expect(typeof barrel.homeLoader).toBe('function');
-    expect(typeof barrel.Level).toBe('function');
-    expect(typeof barrel.levelLoader).toBe('function');
+    expect(typeof barrel.CardTypeHome).toBe('function');
+    expect(typeof barrel.cardTypeHomeLoader).toBe('function');
+    expect(typeof barrel.Conversation).toBe('function');
     expect(typeof barrel.Mode).toBe('function');
     expect(typeof barrel.modeLoader).toBe('function');
     expect(typeof barrel.Learn).toBe('function');

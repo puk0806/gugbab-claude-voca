@@ -23,22 +23,34 @@ test.describe('routes — visual regression', () => {
     await expect(page).toHaveScreenshot('home.png', { fullPage: true });
   });
 
-  test('level-A1', async ({ page }) => {
-    await page.goto('/level/A1');
+  test('conversation', async ({ page }) => {
+    await page.goto('/conversation');
     await settle(page);
-    await expect(page).toHaveScreenshot('level-A1.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('conversation.png', { fullPage: true });
   });
 
-  test('level-A1-word-mode', async ({ page }) => {
-    await page.goto('/level/A1/word');
+  test('cards-word', async ({ page }) => {
+    await page.goto('/cards/word');
     await settle(page);
-    await expect(page).toHaveScreenshot('level-A1-word-mode.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('cards-word.png', { fullPage: true });
   });
 
-  test('level-A1-sentence-mode', async ({ page }) => {
-    await page.goto('/level/A1/sentence');
+  test('cards-sentence', async ({ page }) => {
+    await page.goto('/cards/sentence');
     await settle(page);
-    await expect(page).toHaveScreenshot('level-A1-sentence-mode.png', { fullPage: true });
+    await expect(page).toHaveScreenshot('cards-sentence.png', { fullPage: true });
+  });
+
+  test('cards-word-A1-mode', async ({ page }) => {
+    await page.goto('/cards/word/A1');
+    await settle(page);
+    await expect(page).toHaveScreenshot('cards-word-A1-mode.png', { fullPage: true });
+  });
+
+  test('cards-sentence-A1-mode', async ({ page }) => {
+    await page.goto('/cards/sentence/A1');
+    await settle(page);
+    await expect(page).toHaveScreenshot('cards-sentence-A1-mode.png', { fullPage: true });
   });
 
   test('vocabulary-A1-word', async ({ page }) => {

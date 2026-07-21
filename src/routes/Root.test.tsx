@@ -19,10 +19,10 @@ describe('<Root>', () => {
         {
           path: '/',
           Component: Root,
-          children: [{ path: 'level/A1', element: <div>레벨</div> }],
+          children: [{ path: 'cards/word', element: <div>난이도</div> }],
         },
       ],
-      { initialEntries: ['/level/A1'] },
+      { initialEntries: ['/cards/word'] },
     );
     render(<RouterProvider router={router} />);
     expect(screen.getByRole('button', { name: /뒤로 가기/ })).toBeInTheDocument();

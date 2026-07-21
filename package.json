@@ -22,13 +22,14 @@
     "format:check": "biome format .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
     "test:visual:report": "playwright show-report",
     "generate-pwa-assets": "pwa-assets-generator"
   },
   "dependencies": {
+    "@gugbab/hooks": "^1.1.0",
     "@gugbab/styled-mui": "^1.0.1",
     "@gugbab/tokens": "^1.0.0",
     "clsx": "^2.1.1",

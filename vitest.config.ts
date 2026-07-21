@@ -7,10 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      'virtual:pwa-register': path.resolve(
-        __dirname,
-        './src/__mocks__/pwa-register.ts',
-      ),
+      'virtual:pwa-register': path.resolve(__dirname, './src/__mocks__/pwa-register.ts'),
     },
   },
   test: {
@@ -18,7 +15,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/__tests__/setup.ts'],
     css: false,
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}', 'api/**/*.{test,spec}.ts'],
     exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     coverage: {
       provider: 'v8',

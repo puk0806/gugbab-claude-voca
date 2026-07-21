@@ -4,10 +4,18 @@
  * - CardMarkRow: 단어장 마킹 (M5). cardId 단위로 1개 (모드 무관).
  * - AppSettingRow: key-value 영속 설정.
  * - SessionLogRow: 학습 세션 로그 (P1).
+ * - ChatMessageRow: 대화 연습 히스토리 (v2).
  *
  * SrsCard(`@/srs`)는 본 DB의 cardProgress 테이블 row 타입으로 직접 사용.
  */
 import type { CardType, CEFR, StudyMode, UserMark } from '@/shared/types';
+
+export interface ChatMessageRow {
+  readonly id?: number; // auto-increment, 첫 insert 시 미정
+  readonly role: 'user' | 'assistant';
+  readonly content: string;
+  readonly createdAt: number;
+}
 
 export interface CardMarkRow {
   readonly cardId: string;
