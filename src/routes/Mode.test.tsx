@@ -5,7 +5,7 @@ import { upsertProgress } from '@/db';
 import { resetDb } from '@/db/schema';
 import { routes } from '@/router';
 
-describe('Mode route (/level/:cefr/:cardType)', () => {
+describe('Mode route (/cards/:cardType/:cefr)', () => {
   beforeEach(async () => {
     await resetDb();
   });
@@ -15,7 +15,7 @@ describe('Mode route (/level/:cefr/:cardType)', () => {
 
   it('단어(word)에서는 클로즈 모드가 비활성', async () => {
     mockFetchByUrlSuffix({});
-    renderRoutes(routes, '/level/A1/word');
+    renderRoutes(routes, '/cards/word/A1');
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /A1 · 단어/ })).toBeInTheDocument();
     });
@@ -26,7 +26,7 @@ describe('Mode route (/level/:cefr/:cardType)', () => {
 
   it('문장(sentence)은 flashcard + cloze + 단어장 활성, recall 비활성', async () => {
     mockFetchByUrlSuffix({});
-    renderRoutes(routes, '/level/A1/sentence');
+    renderRoutes(routes, '/cards/sentence/A1');
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /A1 · 문장/ })).toBeInTheDocument();
     });
@@ -54,7 +54,7 @@ describe('Mode route (/level/:cefr/:cardType)', () => {
       lastRating: 'good',
     });
     mockFetchByUrlSuffix({});
-    renderRoutes(routes, '/level/A1/word');
+    renderRoutes(routes, '/cards/word/A1');
     await waitFor(() => screen.getByRole('heading', { name: /A1 · 단어/ }));
     const flashcardTile = screen.getByRole('button', { name: /플래시카드/ });
     expect(flashcardTile).toHaveTextContent(/학습 1/);

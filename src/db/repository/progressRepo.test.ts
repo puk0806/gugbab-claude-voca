@@ -8,6 +8,7 @@ import {
   getDueCards,
   getNewProgress,
   getProgress,
+  getProgressSummariesByType,
   getProgressSummary,
   upsertProgress,
 } from './progressRepo';
@@ -185,6 +186,26 @@ describe('progressRepo', () => {
       expect(r.learned).toBe(2);
       expect(r.completed).toBe(1);
       expect(r.due).toBe(1);
+    });
+  });
+
+  describe('getProgressSummariesByType (벌크 집계)', () => {
+    it('cardType 단일 조회로 레벨별 요약을 반환하고, 레벨별 getProgressSummary 와 일치한다', async () => {
+      await upsertProgress(makeCard({ cardId: 'a1_1', level: 'A1', dueAt: NOW - DAY }));
+      await upsertProgress(makeCard({ cardId: 'a2_1', level: 'A2', dueAt: NOW + DAY }));
+      // 다른 cardType 은 집계에서 제외
+      await upsertProgress(makeCard({ cardId: 's1', cardType: 'sentence', level: 'A1' }));
+
+      const totals = { A1: 100, A2: 50, B1: 10, B2: 10, C1: 10, C2: 10 } as const;
+      const bulk = await getProgressSummariesByType('word', totals, NOW);
+
+      expect(bulk.A1).toEqual(await getProgressSummary('word', 'A1', 100, NOW));
+      expect(bulk.A2).toEqual(await getProgressSummary('word', 'A2', 50, NOW));
+      expect(bulk.A1.learned).toBe(1);
+      expect(bulk.A1.due).toBe(1);
+      expect(bulk.A2.learned).toBe(1);
+      expect(bulk.B1.learned).toBe(0);
+      expect(bulk.B1.total).toBe(10);
     });
   });
 });

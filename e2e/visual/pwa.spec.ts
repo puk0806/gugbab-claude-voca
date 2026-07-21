@@ -87,8 +87,9 @@ test.describe.skip(
         { timeout: 10_000 },
       );
       await context.setOffline(true);
-      await page.goto('/level/A1');
-      await expect(page.locator('#root > *').first()).toBeVisible();
+      await page.goto('/cards/word/A1');
+      // NotFound 로 빠지면 무의미한 테스트가 되므로 실제 화면 헤딩까지 확인
+      await expect(page.getByRole('heading', { name: /A1 · 단어/ })).toBeVisible();
     });
   },
 );

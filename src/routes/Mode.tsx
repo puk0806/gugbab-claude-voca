@@ -1,5 +1,5 @@
 /**
- * `/level/:cefr/:cardType` — 학습 모드 선택 (플래시카드 / 리콜 / 클로즈 / 단어장).
+ * `/cards/:cardType/:cefr` — 학습 모드 선택 (플래시카드 / 리콜 / 클로즈 / 단어장).
  *
  * cardType=word인 경우 클로즈 모드 비활성.
  * 단어장 선택 시 `/vocabulary/:cefr/:cardType`로 이동.

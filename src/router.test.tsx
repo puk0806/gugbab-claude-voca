@@ -52,19 +52,20 @@ describe('router definition', () => {
   it('주요 라우트가 모두 정의되어 있다', () => {
     const children = routes[0]?.children ?? [];
     const paths = children.map((c) => (c.index ? 'index' : c.path === '*' ? 'catchall' : c.path));
-    expect(paths).toContain('level/:cefr');
-    expect(paths).toContain('level/:cefr/:cardType');
+    expect(paths).toContain('conversation');
+    expect(paths).toContain('cards/:cardType');
+    expect(paths).toContain('cards/:cardType/:cefr');
     expect(paths).toContain('learn/:cefr/:cardType/:studyMode');
     expect(paths).toContain('vocabulary/:cefr/:cardType');
     expect(paths).toContain('catchall');
   });
 
-  it('홈 경로 마운트 시 레벨 선택 헤딩이 표시된다', async () => {
+  it('홈 경로 마운트 시 3택 헤딩이 표시된다', async () => {
     mockFetch({ '/data/manifest.json': MANIFEST_FIXTURE });
     const router = createMemoryRouter(routes, { initialEntries: ['/'] });
     render(<RouterProvider router={router} />);
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /레벨을 선택하세요/ })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /무엇을 연습할까요/ })).toBeInTheDocument();
     });
   });
 

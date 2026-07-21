@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { db, GugbabVocaDB, resetDb } from './schema';
 
-describe('GugbabVocaDB schema v1', () => {
+describe('GugbabVocaDB schema (v2)', () => {
   beforeEach(async () => {
     await resetDb();
   });
@@ -15,9 +15,15 @@ describe('GugbabVocaDB schema v1', () => {
     expect(db.name).toBe('gugbab-voca');
   });
 
-  it('4개 테이블이 정의된다', () => {
+  it('5개 테이블이 정의된다 (v2: chatMessage 추가)', () => {
     const tableNames = db.tables.map((t) => t.name).sort();
-    expect(tableNames).toEqual(['appSettings', 'cardMark', 'cardProgress', 'sessionLog']);
+    expect(tableNames).toEqual([
+      'appSettings',
+      'cardMark',
+      'cardProgress',
+      'chatMessage',
+      'sessionLog',
+    ]);
   });
 
   it('cardProgress: 복합 PK [cardId+studyMode] (M1)', () => {
