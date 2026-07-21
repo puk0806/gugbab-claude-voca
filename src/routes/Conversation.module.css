@@ -82,9 +82,48 @@
   font-size: 13px;
 }
 
+.micHint {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.interim {
+  color: var(--gugbab-color-fg-secondary);
+  font-style: italic;
+}
+
+.micErrorText {
+  color: var(--gugbab-color-danger-base);
+}
+
 .inputRow {
   display: flex;
   gap: 8px;
+}
+
+.micButton {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.micButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.micButtonActive {
+  background: var(--gugbab-color-danger-subtle);
+  border-color: var(--gugbab-color-danger-base);
+  color: var(--gugbab-color-danger-base);
 }
 
 .input {

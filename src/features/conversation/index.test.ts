@@ -7,6 +7,8 @@ describe('features/conversation public API (barrel)', () => {
       'ENGLISH_TUTOR_SYSTEM_PROMPT',
       'MAX_HISTORY',
       'buildChatRequestBody',
+      'createRecognizer',
+      'isRecognitionSupported',
       'useConversation',
     ]);
   });

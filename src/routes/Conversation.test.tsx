@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -97,5 +97,82 @@ describe('<Conversation>', () => {
     renderConversation();
     await userEvent.click(screen.getByRole('button', { name: '새 대화' }));
     expect(clearConversation).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('<Conversation> 마이크 입력', () => {
+  type OnResult = (event: {
+    results: Record<number | string, unknown>;
+    resultIndex?: number;
+  }) => void;
+
+  let lastRec: { onresult: OnResult | null; onend: (() => void) | null } | null = null;
+  const startMock = vi.fn();
+
+  class MockRecognition {
+    lang = '';
+    continuous = true;
+    interimResults = false;
+    onresult: OnResult | null = null;
+    onend: (() => void) | null = null;
+    onerror: ((event: { error: string }) => void) | null = null;
+    start = startMock;
+    stop = vi.fn();
+    abort = vi.fn();
+    constructor() {
+      lastRec = this;
+    }
+  }
+
+  beforeEach(() => {
+    hookResult = makeResult();
+    startMock.mockClear();
+    lastRec = null;
+  });
+
+  it('음성 인식 미지원 환경(jsdom 기본)에서는 마이크 버튼이 없다', () => {
+    renderConversation();
+    expect(screen.queryByRole('button', { name: '음성 입력' })).not.toBeInTheDocument();
+  });
+
+  it('지원 환경: 마이크 시작 → final 결과가 입력창에 반영된다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      const micBtn = await screen.findByRole('button', { name: '음성 입력' });
+      await userEvent.click(micBtn);
+      expect(startMock).toHaveBeenCalledTimes(1);
+      // listening 상태 — 중지 라벨로 전환
+      expect(screen.getByRole('button', { name: '음성 입력 중지' })).toBeInTheDocument();
+
+      // final 인식 결과 수신
+      lastRec?.onresult?.({
+        results: { length: 1, 0: { isFinal: true, 0: { transcript: 'How are you' } } },
+        resultIndex: 0,
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: '메시지 입력' })).toHaveValue('How are you');
+      });
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('interim 결과는 입력창이 아닌 힌트 영역에 표시된다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      lastRec?.onresult?.({
+        results: { length: 1, 0: { isFinal: false, 0: { transcript: 'hello th' } } },
+        resultIndex: 0,
+      });
+      await waitFor(() => {
+        expect(screen.getByText('hello th')).toBeInTheDocument();
+      });
+      expect(screen.getByRole('textbox', { name: '메시지 입력' })).toHaveValue('');
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
   });
 });
