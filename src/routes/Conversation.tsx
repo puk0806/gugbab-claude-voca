@@ -11,8 +11,13 @@ import type { ChatMessageRow } from '@/db';
 import {
   createRecognizer,
   isRecognitionSupported,
+  loadReplyAidMode,
   type MicError,
+  REPLY_AID_MODE_LABELS,
+  REPLY_AID_MODES,
+  type ReplyAidMode,
   type SpeechRecognizer,
+  saveReplyAidMode,
   useConversation,
 } from '@/features/conversation';
 import { EmptyState } from '@/shared/components';
@@ -48,6 +53,8 @@ export function Conversation() {
   const { ready, messages, streamingText, status, sendMessage, clearConversation } =
     useConversation();
   const [input, setInput] = useState('');
+  // 답변 부가 정보(해석·핵심표현) 모드 — 라디오 선택, localStorage 영속
+  const [replyAidMode, setReplyAidMode] = useState<ReplyAidMode>(() => loadReplyAidMode());
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollPendingRef = useRef(false);
 
@@ -143,7 +150,12 @@ export function Conversation() {
     const content = input.trim();
     if (!content || streaming) return;
     setInput('');
-    void sendMessage(content);
+    void sendMessage(content, replyAidMode);
+  };
+
+  const handleModeChange = (mode: ReplyAidMode): void => {
+    setReplyAidMode(mode);
+    saveReplyAidMode(mode);
   };
 
   return (
@@ -159,6 +171,25 @@ export function Conversation() {
             새 대화
           </button>
         )}
+      </div>
+
+      <div className={styles.modeRow} role="radiogroup" aria-label="답변 부가 정보">
+        {REPLY_AID_MODES.map((mode) => (
+          <label
+            key={mode}
+            className={`${styles.modeOption} ${mode === replyAidMode ? styles.modeOptionActive : ''}`}
+          >
+            <input
+              type="radio"
+              name="replyAidMode"
+              value={mode}
+              checked={mode === replyAidMode}
+              onChange={() => handleModeChange(mode)}
+              className={styles.modeInput}
+            />
+            {REPLY_AID_MODE_LABELS[mode]}
+          </label>
+        ))}
       </div>
 
       <div className={styles.messages}>

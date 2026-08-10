@@ -16,7 +16,7 @@
 import { type SSEChatStatus, useSSEChat } from '@gugbab/hooks';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { appendChatMessage, type ChatMessageRow, clearChatMessages, listChatMessages } from '@/db';
-import { buildChatRequestBody, type ChatMessage } from './chatRequest';
+import { buildChatRequestBody, type ChatMessage, type ReplyAidMode } from './chatRequest';
 
 export type ConversationStatus = SSEChatStatus;
 
@@ -27,7 +27,7 @@ export interface UseConversationResult {
   /** 스트리밍 중인 assistant 응답 (미저장 상태) */
   readonly streamingText: string;
   readonly status: ConversationStatus;
-  readonly sendMessage: (content: string) => Promise<void>;
+  readonly sendMessage: (content: string, replyAidMode?: ReplyAidMode) => Promise<void>;
   readonly clearConversation: () => Promise<void>;
 }
 
@@ -90,7 +90,7 @@ export function useConversation(): UseConversationResult {
   }, [abort]);
 
   const sendMessage = useCallback(
-    async (content: string): Promise<void> => {
+    async (content: string, replyAidMode?: ReplyAidMode): Promise<void> => {
       const trimmed = content.trim();
       if (!trimmed) return;
 
@@ -104,7 +104,7 @@ export function useConversation(): UseConversationResult {
         role: m.role,
         content: m.content,
       }));
-      await Promise.all([send(buildChatRequestBody(history)), persisted]);
+      await Promise.all([send(buildChatRequestBody(history, replyAidMode)), persisted]);
     },
     [commitAppend, send],
   );

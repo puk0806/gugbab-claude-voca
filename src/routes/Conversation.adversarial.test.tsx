@@ -101,6 +101,6 @@ describe('<Conversation> 적대적 시나리오', () => {
     await userEvent.click(input);
     await userEvent.paste(big);
     await userEvent.click(screen.getByRole('button', { name: '전송' }));
-    expect(sendMessage).toHaveBeenCalledWith(big);
+    expect(sendMessage).toHaveBeenCalledWith(big, 'both');
   });
 });
