@@ -4,11 +4,16 @@ import * as PublicApi from './index';
 describe('features/conversation public API (barrel)', () => {
   it('public API 심볼 명시 검증', () => {
     expect(Object.keys(PublicApi).sort()).toEqual([
-      'ENGLISH_TUTOR_SYSTEM_PROMPT',
+      'DEFAULT_REPLY_AID_MODE',
       'MAX_HISTORY',
+      'REPLY_AID_MODES',
+      'REPLY_AID_MODE_LABELS',
       'buildChatRequestBody',
+      'buildEnglishTutorSystemPrompt',
       'createRecognizer',
       'isRecognitionSupported',
+      'loadReplyAidMode',
+      'saveReplyAidMode',
       'useConversation',
     ]);
   });

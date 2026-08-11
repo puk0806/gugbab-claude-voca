@@ -28,6 +28,46 @@
   cursor: pointer;
 }
 
+.modeRow {
+  display: flex;
+  gap: 6px;
+}
+
+.modeOption {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  color: var(--gugbab-color-fg-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.modeOption:has(.modeInput:focus-visible) {
+  outline: 2px solid var(--gugbab-color-accent-base);
+  outline-offset: 1px;
+}
+
+.modeOptionActive {
+  background: var(--gugbab-color-accent-base);
+  border-color: var(--gugbab-color-accent-base);
+  color: var(--gugbab-color-fg-on-accent, #fff);
+  font-weight: 600;
+}
+
+.modeInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;

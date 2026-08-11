@@ -43,6 +43,7 @@ describe('<Conversation>', () => {
   beforeEach(() => {
     sendMessage.mockClear();
     clearConversation.mockClear();
+    localStorage.clear();
     hookResult = makeResult();
   });
 
@@ -64,13 +65,41 @@ describe('<Conversation>', () => {
     expect(screen.getByText('Hi! How are you?')).toBeInTheDocument();
   });
 
-  it('입력 후 전송 시 sendMessage 호출 + 입력창 비움', async () => {
+  it('입력 후 전송 시 sendMessage 호출(기본 모드 both) + 입력창 비움', async () => {
     renderConversation();
     const input = screen.getByRole('textbox', { name: '메시지 입력' });
     await userEvent.type(input, 'Nice to meet you');
     await userEvent.click(screen.getByRole('button', { name: '전송' }));
-    expect(sendMessage).toHaveBeenCalledWith('Nice to meet you');
+    expect(sendMessage).toHaveBeenCalledWith('Nice to meet you', 'both');
     expect(input).toHaveValue('');
+  });
+
+  it('부가 정보 라디오: 4개 옵션이 있고 기본값은 "둘 다"', () => {
+    renderConversation();
+    const group = screen.getByRole('radiogroup', { name: '답변 부가 정보' });
+    expect(group).toBeInTheDocument();
+    for (const label of ['영어만', '해석', '핵심표현', '둘 다']) {
+      expect(screen.getByRole('radio', { name: label })).toBeInTheDocument();
+    }
+    expect(screen.getByRole('radio', { name: '둘 다' })).toBeChecked();
+  });
+
+  it('라디오 변경 시 선택 모드로 전송하고 localStorage 에 저장한다', async () => {
+    renderConversation();
+    await userEvent.click(screen.getByRole('radio', { name: '영어만' }));
+    expect(screen.getByRole('radio', { name: '영어만' })).toBeChecked();
+    expect(localStorage.getItem('gugbab-voca:replyAidMode')).toBe('none');
+
+    const input = screen.getByRole('textbox', { name: '메시지 입력' });
+    await userEvent.type(input, 'Hello');
+    await userEvent.click(screen.getByRole('button', { name: '전송' }));
+    expect(sendMessage).toHaveBeenCalledWith('Hello', 'none');
+  });
+
+  it('저장된 모드가 있으면 초기 선택값으로 복원한다', () => {
+    localStorage.setItem('gugbab-voca:replyAidMode', 'translation');
+    renderConversation();
+    expect(screen.getByRole('radio', { name: '해석' })).toBeChecked();
   });
 
   it('스트리밍 중: 진행 중 말풍선 표시 + 전송 비활성', () => {

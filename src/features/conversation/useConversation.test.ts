@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { listChatMessages } from '@/db';
 import { resetDb } from '@/db/schema';
-import { ENGLISH_TUTOR_SYSTEM_PROMPT } from './chatRequest';
+import { buildEnglishTutorSystemPrompt } from './chatRequest';
 
 /** useSSEChat 을 제어 가능한 fake 로 대체 — 스트리밍 자체는 패키지 책임. */
 const sendMock = vi.fn<(body: unknown) => Promise<void>>(async () => {});
@@ -59,8 +59,20 @@ describe('useConversation', () => {
       messages: { role: string; content: string }[];
     };
     expect(body.app).toBe('english');
-    expect(body.systemPrompt).toBe(ENGLISH_TUTOR_SYSTEM_PROMPT);
+    expect(body.systemPrompt).toBe(buildEnglishTutorSystemPrompt('both'));
     expect(body.messages.at(-1)).toEqual({ role: 'user', content: 'Hello there!' });
+  });
+
+  it('sendMessage: replyAidMode 를 넘기면 해당 모드의 systemPrompt 로 전송한다', async () => {
+    const { result } = renderHook(() => useConversation());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    await act(async () => {
+      await result.current.sendMessage('Hello there!', 'none');
+    });
+
+    const body = sendMock.mock.calls[0]?.[0] as { systemPrompt: string };
+    expect(body.systemPrompt).toBe(buildEnglishTutorSystemPrompt('none'));
   });
 
   it('스트리밍 완료(onDone) 시 assistant 응답을 DB 에 저장한다', async () => {
