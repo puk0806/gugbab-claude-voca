@@ -10,4 +10,4 @@
 - [커밋·푸시 전 작업 보고 필수](feedback_pre_commit_report.md) — 모든 commit/push 직전 변경 파일·핵심 결정·미해결 항목 보고 후 사용자 승인 대기
 - [코드 = 테스트 한 세트](feedback_test_paired_with_code.md) — 테스트 없는 코드 머지 금지. 코드 + 테스트는 같은 PR/커밋. 환경 설정은 예외
 - [콘텐츠 출처 답습 흔적 제거](feedback_content_origin_concealment.md) — Unit/DAY/책 단원명 박지 말 것. 학술·정부 자료 출처만 + 언어학적 재구성
-- [훅 .cjs 필수](project_hooks_cjs_requirement.md) — 이 레포는 type:module이라 훅 .js 금지. 00_gugbab-claude sync 시 .js로 덮이면 require 에러 재발
+- [훅 commonjs 마커 필수](project_hooks_cjs_requirement.md) — 이 레포는 type:module. 해결책 = .claude/hooks/package.json {"type":"commonjs"} 마커 (삭제 금지). 2026-09-04 .cjs 방식에서 전환

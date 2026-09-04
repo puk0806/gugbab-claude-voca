@@ -3,7 +3,7 @@ name: gugbab-voca 진행 상태
 description: 2026-05-16 기준 Phase 0~7 완료(전 레벨 콘텐츠 + Vercel 배포), 다음=Phase 8 P2 보강
 type: project
 originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
-modified: 2026-08-10T08:23:51.021Z
+modified: 2026-09-04T04:51:39.473Z
 ---
 # 진행 상태 (2026-05-16 기준)
 
@@ -33,6 +33,7 @@ modified: 2026-08-10T08:23:51.021Z
 | 개선 | **카드 상태 배지 + 클로즈 힌트** — ① Learn 상단바에 아는 카드(초록 success)/몰랐던 카드(빨강 danger) 배지 (`cardStatusBadge.ts`, mark 기반) ② 클로즈 빈칸에 글자수 마스크 + 한 글자씩 힌트 (리콜 `buildMask` 를 `learning/answerMask.ts` 로 공용 추출, 힌트 사용 시 정답도 again — PR #20 정책 준수) | ✅ 2026-07-16 (`feature/card-badge-cloze-hint`, PR #24) |
 | 8-3 | **홈 재구성 + 대화 연습(relay)** — ① 홈 3택(대화/단어/문장)·`/cards/:cardType`→난이도→모드 흐름, Level.tsx 삭제 ② `/conversation` 채팅: `@gugbab/hooks` useSSEChat + Dexie **v2 chatMessage** + `api/chat.ts` 서버리스 프록시(RELAY_SECRET) + vite dev proxy. relay `english` 타입·systemPrompt는 앱이 전송 ③ 전체 리뷰 10건→9건 수정 (**StrictMode 이중마운트로 assistant 저장 차단되던 치명 버그** — e2e가 발견, `tsc -b` 교정: 기존 typecheck는 빈 실행이었음, 벌크 진도 조회 `getProgressSummariesByType`) ④ 적대 테스트: relay mock Playwright e2e 7개(XSS·장애·영속) + unit 6개(IME·연타) ⑤ **마이크 영어 STT** (`speech.ts` — 04 health의 speech 모듈 포팅, lang=en-US, interim 힌트/final만 입력 반영, 미지원 시 버튼 숨김). **미완**: relay 실연동 검증(relay 이슈로 보류), Vercel env(RELAY_URL·RELAY_SECRET) 등록은 사용자 진행 | ✅ 2026-07-21 (`feature/home-restructure`) |
 | 개선 | **대화 답변 부가 정보 라디오 모드** — ① systemPrompt를 `buildEnglishTutorSystemPrompt(mode)` 조립 함수로 리팩터링 (`ReplyAidMode: none/translation/expressions/both`) ② 답변 뒤 (전체 한국어 해석) + 📌 핵심 표현(`- 표현 — 뜻` 2~4개) 블록을 모드에 따라 지시 ③ 대화 상단 pill 라디오 4택(영어만/해석/핵심표현/둘 다, 기본 둘 다) + localStorage 영속(`replyAidMode.ts`) ④ 테스트 14개 추가·갱신 458/458 · Codex 리뷰 무결함. **미검증**: relay 실연동 형식 확인은 배포 후 | ✅ 2026-08-10 (`feature/conversation-reply-format`) |
+| 개선 | **마이크 STT 공통 훅 교체** — 로컬 `speech.ts` 삭제 → `@gugbab/hooks@1.3.0` `useSpeechRecognition({lang:'en-US', onFinal})` 적용 (상태 관리·stale 가드·언마운트 abort 훅 내장). 앱 경계 STT 계약 테스트 3개 추가(스트리밍 abort+UI 해제·에러 정규화·final+interim 배치). 주의: **pnpm 프로젝트** — npm install 금지(arborist가 .pnpm 레이아웃에서 크래시) | ✅ 2026-09-04 (`feature/common-speech-hook`) |
 | 9 | 콘텐츠 audit·수정 (사용 후 피드백 기반) | — |
 
 ## 콘텐츠 최종 상태 (2026-05-16)
