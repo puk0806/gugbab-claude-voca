@@ -16,7 +16,5 @@ export {
   REPLY_AID_MODES,
   saveReplyAidMode,
 } from './replyAidMode';
-export type { MicError, SpeechRecognizer } from './speech';
-export { createRecognizer, isRecognitionSupported } from './speech';
 export type { ConversationStatus, UseConversationResult } from './useConversation';
 export { useConversation } from './useConversation';

@@ -6,17 +6,15 @@
  * - 말풍선 목록은 memo 컴포넌트로 분리 — 입력 키스트로크·스트림 chunk 재렌더에서 제외
  * - "새 대화" 로 히스토리 초기화
  */
+
+import { type MicError, useSpeechRecognition } from '@gugbab/hooks';
 import { memo, useEffect, useRef, useState } from 'react';
 import type { ChatMessageRow } from '@/db';
 import {
-  createRecognizer,
-  isRecognitionSupported,
   loadReplyAidMode,
-  type MicError,
   REPLY_AID_MODE_LABELS,
   REPLY_AID_MODES,
   type ReplyAidMode,
-  type SpeechRecognizer,
   saveReplyAidMode,
   useConversation,
 } from '@/features/conversation';
@@ -58,76 +56,32 @@ export function Conversation() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollPendingRef = useRef(false);
 
-  // 마이크(영어 STT) — 형제 앱 ChatInputBar 패턴
-  const [micAvailable, setMicAvailable] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [interimText, setInterimText] = useState('');
-  const [micError, setMicError] = useState('');
-  const recognizerRef = useRef<SpeechRecognizer | null>(null);
-  // 인식 콜백이 생성 시점 input 에 고정되지 않도록 최신 값을 ref 로 추적
-  const inputValueRef = useRef(input);
-  inputValueRef.current = input;
+  // 마이크(영어 STT) — @gugbab/hooks 공통 훅 (상태 배선·stale 세션 가드·언마운트 abort 포함)
+  const {
+    supported: micAvailable,
+    listening,
+    interimText,
+    error: micErrorType,
+    abort: abortRecognition,
+    toggle: toggleMic,
+  } = useSpeechRecognition({
+    lang: 'en-US',
+    onFinal: (transcript) => {
+      // 최종 결과만 실제 입력에 반영 (interim 덮어쓰기 방지)
+      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    },
+  });
+  const micError = micErrorType ? MIC_ERROR_MESSAGES[micErrorType] : '';
 
   const streaming = status === 'streaming';
 
+  // 전송(스트리밍 시작)되면 진행 중이던 인식을 즉시 파기 — 늦은 결과가 입력을 다시 채우는 것 방지
   useEffect(() => {
-    setMicAvailable(isRecognitionSupported());
-    return () => {
-      recognizerRef.current?.abort();
-    };
-  }, []);
-
-  // 전송(스트리밍 시작)되면 진행 중이던 인식을 즉시 중단 — 늦은 결과가 입력을 다시 채우는 것 방지
-  useEffect(() => {
-    if (!streaming) return;
-    recognizerRef.current?.abort();
-    recognizerRef.current = null;
-    setListening(false);
-    setInterimText('');
-  }, [streaming]);
+    if (streaming) abortRecognition();
+  }, [streaming, abortRecognition]);
 
   const handleMic = (): void => {
-    setMicError('');
-    if (listening) {
-      recognizerRef.current?.stop();
-      setListening(false);
-      setInterimText('');
-      return;
-    }
-    recognizerRef.current?.abort();
-
-    try {
-      // 이전 인스턴스의 지연 콜백이 새 세션 상태를 뒤집지 않도록 활성 인스턴스 여부를 확인
-      const rec: SpeechRecognizer = createRecognizer(
-        (transcript, isFinal) => {
-          if (recognizerRef.current !== rec) return;
-          if (isFinal) {
-            // 최종 결과만 실제 입력에 반영 (interim 덮어쓰기 방지)
-            const prev = inputValueRef.current;
-            setInput(prev ? `${prev} ${transcript}` : transcript);
-            setInterimText('');
-          } else {
-            setInterimText(transcript);
-          }
-        },
-        () => {
-          if (recognizerRef.current !== rec) return;
-          setListening(false);
-          setInterimText('');
-        },
-        (type) => {
-          if (recognizerRef.current !== rec) return;
-          setListening(false);
-          setInterimText('');
-          setMicError(MIC_ERROR_MESSAGES[type]);
-        },
-      );
-      recognizerRef.current = rec;
-      rec.start();
-      setListening(true);
-    } catch {
-      setMicError(MIC_ERROR_MESSAGES.unknown);
-    }
+    toggleMic();
   };
 
   // 새 메시지·스트리밍 진행 시 맨 아래로 스크롤 — chunk 마다가 아닌 frame 당 1회

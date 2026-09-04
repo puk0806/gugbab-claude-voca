@@ -7,6 +7,8 @@
  *   3. studyMode별 컴포넌트 분기 (flashcard / recall / cloze)
  *   4. 큐 소진 시 SessionSummary 렌더
  */
+
+import { useSpeak } from '@gugbab/hooks';
 import { type LoaderFunctionArgs, useLoaderData, useParams } from 'react-router-dom';
 import type { SentenceEntry, WordEntry } from '@/content';
 import { loadSentences, loadWords } from '@/content';
@@ -24,7 +26,6 @@ import { RecallPrompt } from '@/features/recall';
 import { EmptyState } from '@/shared/components';
 import { isCardType, isCefr, isStudyMode, isStudyModeAvailable } from '@/shared/types';
 import type { SrsCard } from '@/srs';
-import { useSpeak } from '@/tts';
 import styles from './Learn.module.css';
 
 const DEFAULT_SESSION_SIZE = 20;
@@ -96,7 +97,7 @@ export async function learnLoader({ params }: LoaderFunctionArgs): Promise<Learn
 export function Learn() {
   const data = useLoaderData() as LearnSessionData;
   const params = useParams();
-  const { speak, supported: ttsSupported } = useSpeak();
+  const { speak, supported: ttsSupported } = useSpeak({ lang: 'en-US' });
   const { currentCard, cursor, queueLength, finished, getSummary, handleAnswer, restart } =
     useLearnSession(data);
 

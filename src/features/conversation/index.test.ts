@@ -10,8 +10,6 @@ describe('features/conversation public API (barrel)', () => {
       'REPLY_AID_MODE_LABELS',
       'buildChatRequestBody',
       'buildEnglishTutorSystemPrompt',
-      'createRecognizer',
-      'isRecognitionSupported',
       'loadReplyAidMode',
       'saveReplyAidMode',
       'useConversation',
