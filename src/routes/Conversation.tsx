@@ -2,21 +2,20 @@
  * `/conversation` — 영어 회화 연습 (relay app=english SSE 채팅).
  *
  * - 히스토리·전송·스트리밍은 useConversation 훅이 담당
+ * - 마이크(영어 STT)는 @gugbab/hooks 공통 훅 useSpeechRecognition 사용
+ *   (상태 관리·stale 콜백 가드·언마운트 abort 는 훅 내장 — 앱은 메시지 문구만 정의)
  * - 스트리밍 중 assistant 말풍선은 실시간 텍스트로 표시, 완료 시 저장분으로 대체
  * - 말풍선 목록은 memo 컴포넌트로 분리 — 입력 키스트로크·스트림 chunk 재렌더에서 제외
  * - "새 대화" 로 히스토리 초기화
  */
+import { type MicError, useSpeechRecognition } from '@gugbab/hooks';
 import { memo, useEffect, useRef, useState } from 'react';
 import type { ChatMessageRow } from '@/db';
 import {
-  createRecognizer,
-  isRecognitionSupported,
   loadReplyAidMode,
-  type MicError,
   REPLY_AID_MODE_LABELS,
   REPLY_AID_MODES,
   type ReplyAidMode,
-  type SpeechRecognizer,
   saveReplyAidMode,
   useConversation,
 } from '@/features/conversation';
@@ -58,77 +57,28 @@ export function Conversation() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollPendingRef = useRef(false);
 
-  // 마이크(영어 STT) — 형제 앱 ChatInputBar 패턴
-  const [micAvailable, setMicAvailable] = useState(false);
-  const [listening, setListening] = useState(false);
-  const [interimText, setInterimText] = useState('');
-  const [micError, setMicError] = useState('');
-  const recognizerRef = useRef<SpeechRecognizer | null>(null);
-  // 인식 콜백이 생성 시점 input 에 고정되지 않도록 최신 값을 ref 로 추적
-  const inputValueRef = useRef(input);
-  inputValueRef.current = input;
-
   const streaming = status === 'streaming';
 
-  useEffect(() => {
-    setMicAvailable(isRecognitionSupported());
-    return () => {
-      recognizerRef.current?.abort();
-    };
-  }, []);
+  // 마이크(영어 STT) — 공통 훅. final 결과만 입력에 이어붙인다 (interim 은 힌트 표시 전용)
+  const {
+    supported: micAvailable,
+    listening,
+    interimText,
+    error: micError,
+    toggle: toggleMic,
+    abort: abortMic,
+  } = useSpeechRecognition({
+    lang: 'en-US',
+    onFinal: (transcript) => {
+      setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    },
+  });
 
   // 전송(스트리밍 시작)되면 진행 중이던 인식을 즉시 중단 — 늦은 결과가 입력을 다시 채우는 것 방지
   useEffect(() => {
     if (!streaming) return;
-    recognizerRef.current?.abort();
-    recognizerRef.current = null;
-    setListening(false);
-    setInterimText('');
-  }, [streaming]);
-
-  const handleMic = (): void => {
-    setMicError('');
-    if (listening) {
-      recognizerRef.current?.stop();
-      setListening(false);
-      setInterimText('');
-      return;
-    }
-    recognizerRef.current?.abort();
-
-    try {
-      // 이전 인스턴스의 지연 콜백이 새 세션 상태를 뒤집지 않도록 활성 인스턴스 여부를 확인
-      const rec: SpeechRecognizer = createRecognizer(
-        (transcript, isFinal) => {
-          if (recognizerRef.current !== rec) return;
-          if (isFinal) {
-            // 최종 결과만 실제 입력에 반영 (interim 덮어쓰기 방지)
-            const prev = inputValueRef.current;
-            setInput(prev ? `${prev} ${transcript}` : transcript);
-            setInterimText('');
-          } else {
-            setInterimText(transcript);
-          }
-        },
-        () => {
-          if (recognizerRef.current !== rec) return;
-          setListening(false);
-          setInterimText('');
-        },
-        (type) => {
-          if (recognizerRef.current !== rec) return;
-          setListening(false);
-          setInterimText('');
-          setMicError(MIC_ERROR_MESSAGES[type]);
-        },
-      );
-      recognizerRef.current = rec;
-      rec.start();
-      setListening(true);
-    } catch {
-      setMicError(MIC_ERROR_MESSAGES.unknown);
-    }
-  };
+    abortMic();
+  }, [streaming, abortMic]);
 
   // 새 메시지·스트리밍 진행 시 맨 아래로 스크롤 — chunk 마다가 아닌 frame 당 1회
   // biome-ignore lint/correctness/useExhaustiveDependencies: 메시지 수·스트림 텍스트 변화가 스크롤 트리거
@@ -157,6 +107,8 @@ export function Conversation() {
     setReplyAidMode(mode);
     saveReplyAidMode(mode);
   };
+
+  const micErrorMessage = micError ? MIC_ERROR_MESSAGES[micError] : '';
 
   return (
     <div className={styles.root}>
@@ -212,16 +164,16 @@ export function Conversation() {
         <div ref={bottomRef} />
       </div>
 
-      {(interimText || micError) && (
+      {(interimText || micErrorMessage) && (
         <div className={styles.micHint}>
           {interimText && (
             <span className={styles.interim} aria-live="polite">
               {interimText}
             </span>
           )}
-          {micError && (
+          {micErrorMessage && (
             <span className={styles.micErrorText} role="alert">
-              {micError}
+              {micErrorMessage}
             </span>
           )}
         </div>
@@ -232,7 +184,7 @@ export function Conversation() {
           <button
             type="button"
             className={`${styles.micButton} ${listening ? styles.micButtonActive : ''}`}
-            onClick={handleMic}
+            onClick={toggleMic}
             disabled={streaming}
             aria-label={listening ? '음성 입력 중지' : '음성 입력'}
           >

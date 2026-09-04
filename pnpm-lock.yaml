@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gugbab/hooks':
-        specifier: ^1.1.0
-        version: 1.1.0(react@19.2.6)
+        specifier: ^1.3.0
+        version: 1.3.0(react@19.2.6)
       '@gugbab/styled-mui':
         specifier: ^1.0.1
         version: 1.0.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -917,8 +917,8 @@ packages:
     peerDependencies:
       react: '>=18'
 
-  '@gugbab/hooks@1.1.0':
-    resolution: {integrity: sha512-/3VjgxXmIEtHgBnLDPTIsCyj7e/Dmd5hmlk78/C7QeV6HpJg1eymKxF06bqKqntuVri3NJEdQ8DlGHKNNnBJ8Q==}
+  '@gugbab/hooks@1.3.0':
+    resolution: {integrity: sha512-8XFgu5JwDvThle8SiXozpTYCZLWnqpSAo5qY6SUMZh2xoc48ZHdV1gJwqV9ZHWxxehrQf6OJwe3o/jwNFateIg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: '>=18'
@@ -938,8 +938,8 @@ packages:
     resolution: {integrity: sha512-yRYXHqXktj/9a4XwjEPN1R62hZjSghh6+qLJJUa1uLtitV8SNYlBYP9m9mlvGj/ZI/o6joBJQ3eqQcpck2WW5Q==}
     engines: {node: '>=18.0.0'}
 
-  '@gugbab/utils@1.1.0':
-    resolution: {integrity: sha512-1elhF/guMFa4EWL5OSVm3SvW7ZOzWCME9XfZ7KWyykCdgak75ZLb4oSVbphySiq+zkG+uVNI6DxV9RbzGcodYw==}
+  '@gugbab/utils@1.4.0':
+    resolution: {integrity: sha512-3WYC9OcPJCZPxDqvcULil4hsMFW/zL9PQB1x/bBYtyPCM8Nq8mTMeiDt182mrl1jTfPXIu7r+4eHuxbkd46DBg==}
     engines: {node: '>=18.0.0'}
 
   '@img/sharp-darwin-arm64@0.33.5':
@@ -3780,9 +3780,9 @@ snapshots:
       '@gugbab/utils': 1.0.1
       react: 19.2.6
 
-  '@gugbab/hooks@1.1.0(react@19.2.6)':
+  '@gugbab/hooks@1.3.0(react@19.2.6)':
     dependencies:
-      '@gugbab/utils': 1.1.0
+      '@gugbab/utils': 1.4.0
       react: 19.2.6
 
   '@gugbab/styled-mui@1.0.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
@@ -3797,7 +3797,7 @@ snapshots:
 
   '@gugbab/utils@1.0.1': {}
 
-  '@gugbab/utils@1.1.0': {}
+  '@gugbab/utils@1.4.0': {}
 
   '@img/sharp-darwin-arm64@0.33.5':
     optionalDependencies:

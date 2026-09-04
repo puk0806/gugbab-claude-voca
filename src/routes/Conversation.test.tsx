@@ -135,7 +135,12 @@ describe('<Conversation> 마이크 입력', () => {
     resultIndex?: number;
   }) => void;
 
-  let lastRec: { onresult: OnResult | null; onend: (() => void) | null } | null = null;
+  let lastRec: {
+    onresult: OnResult | null;
+    onend: (() => void) | null;
+    onerror: ((event: { error: string }) => void) | null;
+    abort: ReturnType<typeof vi.fn>;
+  } | null = null;
   const startMock = vi.fn();
 
   class MockRecognition {
@@ -200,6 +205,78 @@ describe('<Conversation> 마이크 입력', () => {
         expect(screen.getByText('hello th')).toBeInTheDocument();
       });
       expect(screen.getByRole('textbox', { name: '메시지 입력' })).toHaveValue('');
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+  it('스트리밍 시작 시 진행 중이던 음성 인식을 abort 한다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      const { rerender } = renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      expect(screen.getByRole('button', { name: '음성 입력 중지' })).toBeInTheDocument();
+
+      // interim 힌트가 떠 있는 상태에서 스트리밍 진입
+      lastRec?.onresult?.({
+        results: { length: 1, 0: { isFinal: false, 0: { transcript: 'hello th' } } },
+        resultIndex: 0,
+      });
+      await waitFor(() => {
+        expect(screen.getByText('hello th')).toBeInTheDocument();
+      });
+
+      // 전송으로 스트리밍 상태 진입 — mic 는 즉시 중단되고 UI 상태도 해제되어야 한다
+      hookResult = makeResult({ status: 'streaming', streamingText: '...' });
+      rerender(
+        <MemoryRouter>
+          <Conversation />
+        </MemoryRouter>,
+      );
+      await waitFor(() => {
+        expect(lastRec?.abort).toHaveBeenCalled();
+      });
+      // listening 해제(시작 라벨 복귀) + interim 힌트 제거 — abort 가 UI 상태를 동기 클리어
+      expect(screen.getByRole('button', { name: '음성 입력' })).toBeInTheDocument();
+      expect(screen.queryByText('hello th')).not.toBeInTheDocument();
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('인식 에러는 정규화된 한국어 안내 문구로 표시된다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      lastRec?.onerror?.({ error: 'not-allowed' });
+      lastRec?.onend?.();
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('마이크 권한이 필요합니다');
+      });
+      // 에러 후 listening 해제 — 버튼이 시작 라벨로 복귀
+      expect(screen.getByRole('button', { name: '음성 입력' })).toBeInTheDocument();
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('한 이벤트에 final+interim 이 배치로 오면 final 은 입력, interim 은 힌트로 반영된다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      lastRec?.onresult?.({
+        results: {
+          length: 2,
+          0: { isFinal: true, 0: { transcript: 'How are you' } },
+          1: { isFinal: false, 0: { transcript: 'doing' } },
+        },
+        resultIndex: 0,
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: '메시지 입력' })).toHaveValue('How are you');
+      });
+      expect(screen.getByText('doing')).toBeInTheDocument();
     } finally {
       Reflect.deleteProperty(window, 'SpeechRecognition');
     }
