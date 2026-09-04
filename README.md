@@ -46,33 +46,39 @@
 │   └── skills/                # 스킬 verification 문서
 └── .claude/
     ├── rules/                 # 코딩·작업 규칙
-    ├── agents/                # 27개 에이전트
-    └── skills/                # 48개 스킬
+    ├── hooks/                 # 자동화 훅 20개 (CJS — hooks/package.json 마커)
+    ├── commands/              # 슬래시 커맨드 10개
+    ├── agents/                # 35개 에이전트
+    └── skills/                # 112개 스킬
 ```
 
 ---
 
-## 에이전트 (27개)
+## 에이전트 (35개)
 
 | 카테고리 | 에이전트 |
 |---|---|
-| `domain` (5) | `product-planner`, `ui-ux-designer`, `api-spec-designer`, `business-domain-analyst`, `codebase-domain-analyst` |
+| `domain` (6) | `product-planner`, `ui-ux-designer`, `api-spec-designer`, `business-domain-analyst`, `codebase-domain-analyst`, `frontend-domain-refactorer` |
 | `frontend` (2) | `frontend-architect`, `frontend-developer` |
-| `backend` (1) | `build-error-resolver` (프론트 빌드 에러 처리 겸용) |
+| `backend` (3) | `build-error-resolver`, `typescript-backend-architect`, `typescript-backend-developer` |
 | `devops` (1) | `devops-engineer` |
-| `meta` (6) | `agent-creator`, `skill-creator`, `skill-tester`, `freshness-auditor`, `planner`, `claude-code-guide` |
-| `research` (6) | `deep-researcher`, `web-searcher`, `competitor-analyst`, `data-analyst`, `socratic-interviewer`, `research-reviewer` |
-| `validation` (3) | `qa-engineer`, `fact-checker`, `source-validator` |
+| `meta` (8) | `agent-creator`, `skill-creator`, `skill-tester`, `freshness-auditor`, `claude-code-guide`, `changelog-writer`, `project-scaffolder`, `tech-stack-advisor` |
+| `research` (5) | `deep-researcher`, `web-searcher`, `competitor-analyst`, `data-analyst`, `research-reviewer` |
+| `validation` (10) | `qa-engineer`, `fact-checker`, `source-validator`, `pr-reviewer`, `a11y-auditor`, `security-auditor`, `seo-auditor`, `content-quality-reviewer`, `build-perf-benchmarker`, `perf-report-writer` |
 
 ---
 
-## 스킬 (48개)
+## 스킬 (112개)
 
 | 카테고리 | 개수 | 주요 항목 |
 |---|---|---|
-| `frontend` | 43 | React/TypeScript/Vite 중심. 본 프로젝트 신규 도입: `web-speech-api-tts`, `srs-spaced-repetition`, `indexeddb-dexie` |
-| `devops` | 3 | `docker-deployment`, `github-actions`, `github-actions-visual-regression` |
-| `meta` | 2 | `continuous-learning`, `ralph-loop` |
+| `frontend` | 81 | React/TypeScript/Vite 중심 + SEO 스위트. 본 프로젝트 핵심: `web-speech-api-tts`, `web-speech-api-stt`, `srs-spaced-repetition`, `indexeddb-dexie` |
+| `devops` | 10 | `docker-deployment`, `github-actions(+VR)`, `vercel-sandbox`, n8n 4종, `site-migration-seo` |
+| `meta` | 6 | `claude-code-hook-authoring`, `ralph-loop`, `riper-workflow`, dream 프롬프트 3종 |
+| `architecture` | 5 | `ddd`, `frontend-domain-structure`, `module-boundaries`, `incremental-refactoring` 등 |
+| `health` | 5 | 식단·영양 분석 프롬프트 (형제 앱 도메인) |
+| `writing` | 4 | `content-eeat-quality`, `ymyl-content-seo` 등 |
+| `backend` | 1 | `claude-code-headless` |
 
 frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 
@@ -137,3 +143,4 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 | 2026-05-15 | **Phase 6 PWA + Vercel 배포 완료**: vite-plugin-pwa(Workbox autoUpdate) 도입, manifest·SW·아이콘 자산 5종(Soft 3D Gummi 채택), index.html 메타 보강(favicon·apple-touch-icon·theme-color·OG), vercel.json(SPA fallback + 캐시 헤더). 사용자 Vercel 가입·repo import → 자동 배포 흐름. SW 등록 helper(pwa.ts) + 단위 테스트 + E2E 메타/manifest 검증 |
 | 2026-05-16 | **Phase 7 A2~C2 콘텐츠 확장 완료**: 신규 2,338단어 + 900문장 (A2 518/200, B1 500/200, B2 502/200, C1 407/150, C2 411/150). 4종 자료(NGSL-Spoken·Cambridge EVP·Oxford 3000/5000·EVP) 교차 검증. cloze 정합성 자동 검증 vitest test 도입(누적 lemma 풀, 활용형·기능어·불규칙 화이트리스트 — 6/6 PASS). 5개 레벨 검증 보고서. 출처 답습 흔적 0건 |
 | 2026-05-16 | **Phase 8-1 헤더 install prompt 버튼**: `useInstallPrompt` 훅(beforeinstallprompt + display-mode standalone + iOS Safari 감지). 환경별 분기 — Android Chrome·Desktop Chrome/Edge는 native install 다이얼로그, iOS Safari는 "공유 → 홈 화면에 추가" 4단계 안내 모달, 이미 설치된 standalone 모드는 자동 숨김. ESC·backdrop 클릭 모달 닫기. 단위 테스트 15/15 PASS (iOS·Android·Desktop·standalone·미지원 시나리오 모두) |
+| 2026-09-04 | **공유 설정 레포(00_gugbab-claude) sync 대규모 반영**: 훅 스위트 .cjs→.js 전면 교체(20개, `hooks/package.json` commonjs 마커로 type:module 호환) + tdd-guard→adversarial-test-guard/fake-impl-guard 재설계, 슬래시 커맨드 10종 레포 내 반영, 에이전트 27→35(±: planner·mvp-scope-planner·spec-writer·seo-content-writer-coach·socratic-interviewer 제거, backend 2종·validation 7종·meta 3종·frontend-domain-refactorer 추가), 스킬 48→112(architecture·health·writing 카테고리 신설, SEO 스위트 등), rules 갱신(adversarial-testing 신설·codex-review 컴패니언 경로). README 카탈로그 동기화 |
