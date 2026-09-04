@@ -2,6 +2,7 @@
  * `src/features/conversation/` public API.
  *
  * 영어 회화 연습 — relay(app=english) SSE 채팅 + IndexedDB 히스토리.
+ * 마이크(STT)는 @gugbab/hooks 공통 모듈(useSpeechRecognition)을 직접 사용한다.
  */
 export type { ChatMessage, ChatRequestBody, ReplyAidMode } from './chatRequest';
 export {
@@ -16,7 +17,5 @@ export {
   REPLY_AID_MODES,
   saveReplyAidMode,
 } from './replyAidMode';
-export type { MicError, SpeechRecognizer } from './speech';
-export { createRecognizer, isRecognitionSupported } from './speech';
 export type { ConversationStatus, UseConversationResult } from './useConversation';
 export { useConversation } from './useConversation';

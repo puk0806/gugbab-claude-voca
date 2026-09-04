@@ -132,7 +132,7 @@ Q3. ... — PASS
 agent content test: 3/3 PASS
 ```
 
-**훅 통과 조건** (`deliverable-guard.cjs` 강화 후):
+**훅 통과 조건** (`deliverable-guard.js` 강화 후):
 - "수행일: YYYY-MM-DD" 라인 존재 AND
 - 같은 섹션에 *진짜 수행 흔적* 키워드 1개 이상 존재
   (PASS / FAIL / Q1·Q2 / skill-tester 호출 / agent content test / N/N PASS)

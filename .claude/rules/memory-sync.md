@@ -1,5 +1,10 @@
 # 메모리 동기화 정책
 
+> **이 규칙은 `paths`로 스코핑하지 않는다.** 핵심 트리거는 *커밋·푸시 요청*인데
+> `paths`는 "작업 중인 파일"만 매칭할 수 있어 그 의도를 표현하지 못한다. `memory/**`로
+> 스코핑하면 코드만 수정한 뒤 커밋하는 경로에서 "커밋 시 메모리 정리" 절차가 통째로
+> 빠진다(2026-08-11에 그렇게 넣었다가 되돌림).
+
 > 2026-07-10 개편: symlink + 자동 커밋 구조 폐지 → **전역 1차 저장 + 레포 미러 (커밋은 사용자 수동)**
 
 ## 저장 구조
@@ -17,11 +22,8 @@
 
 | 훅 | 이벤트 | 동작 |
 |----|--------|------|
-| `memory-sync.cjs` | PostToolUse Write / Edit | memory 파일 변경 감지 → 전역↔레포 **양방향 미러 복사** (git 조작 없음) |
-| `memory-pull.cjs` | SessionStart | ① 전역 memory를 실제 디렉토리로 보장 (과거 symlink 발견 시 자동 마이그레이션) ② 레포 `memory/` 파일이 전역에 없거나 내용이 다르면서 더 최신이면 전역으로 복사 (git pull 직후 반영용) |
-
-> 이 레포는 `package.json`에 `"type": "module"`이 있어 훅 파일은 반드시 `.cjs` 확장자를 사용한다
-> (`.js`면 Node가 ESM으로 해석해 `require is not defined` 에러 발생).
+| `memory-sync.js` | PostToolUse Write / Edit | memory 파일 변경 감지 → 전역↔레포 **양방향 미러 복사** (git 조작 없음) |
+| `memory-pull.js` | SessionStart | ① 전역 memory를 실제 디렉토리로 보장 (과거 symlink 발견 시 자동 마이그레이션) ② 레포 `memory/` 파일이 전역에 없거나 내용이 다르면서 더 최신이면 전역으로 복사 (git pull 직후 반영용) |
 
 > 구 구조의 `memory-stop-guard.js`(Stop 자동 커밋)와 `scripts/setup-memory-link.sh`(symlink 수동 설정)는 제거됨.
 
@@ -31,14 +33,14 @@
 [메모리 저장 시]
 Claude가 memory 파일 Write/Edit
   └→ 전역 ~/.claude/projects/<해시>/memory/ 에 저장     ← 1차 (항상)
-      └→ memory-sync.cjs: 레포 memory/ 로 복사           ← Y 프로젝트만
+      └→ memory-sync.js: 레포 memory/ 로 복사            ← Y 프로젝트만
           └→ git 워킹트리에 미커밋 변경으로 표시
               └→ 사용자가 원할 때 직접 커밋(Y) 또는 방치/폐기(사실상 N)
 
 [다른 데스크탑과 공유 시]
 사용자: git add memory/ && git commit && git push          ← 수동
 다른 PC: git pull → 세션 시작
-  └→ memory-pull.cjs: 레포 memory/ → 전역으로 반영
+  └→ memory-pull.js: 레포 memory/ → 전역으로 반영
 ```
 
 ## 커밋 시 메모리 정리 (2026-07-10 신설)
@@ -47,7 +49,7 @@ Claude가 memory 파일 Write/Edit
 
 1. 이번 작업으로 낡아진 memory 서술 스캔 → 갱신 (예: 훅 수·정책 변경이 기존 memory와 어긋나는 경우)
 2. 기록할 가치 있는 신규 결정·피드백 저장 (+ MEMORY.md 인덱스 갱신)
-3. **세션 요약 최신화**: `node $CLAUDE_PROJECT_DIR/.claude/hooks/session-export.cjs --refresh`
+3. **세션 요약 최신화**: `node $CLAUDE_PROJECT_DIR/.claude/hooks/session-export.js --refresh`
    — Stop 이벤트를 기다리지 않고 이 시점까지의 전체 대화를 exports에 재생성 (PR에 대화 기록 누락 방지)
 4. 레포 ↔ 전역 미러 일치 확인 (`diff -rq memory ~/.claude/projects/<해시>/memory`)
 5. memory 변경 → `[memory]` 커밋 / exports 변경 → `[export]` 커밋으로 **해당 커밋 배치에 함께 포함**
@@ -76,7 +78,7 @@ cd 00_gugbab-claude
 # 끝 — 별도 설정 불필요
 ```
 
-SessionStart 훅(`memory-pull.cjs`)이 최초 실행 시 전역 memory 디렉토리를 만들고 레포 `memory/` 내용을 복사한다.
+SessionStart 훅(`memory-pull.js`)이 최초 실행 시 전역 memory 디렉토리를 만들고 레포 `memory/` 내용을 복사한다.
 
 ## 충돌 방지 원칙
 

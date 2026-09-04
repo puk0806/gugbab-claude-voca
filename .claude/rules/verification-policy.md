@@ -13,7 +13,7 @@ verification.md와 SKILL.md 수정 및 검증 상태 전환에 관한 규칙.
 - 이유: Write/Edit 도구를 사용해야 verification-guard 훅이 내용을 검증할 수 있다
 - 읽기 전용 사용(`grep`, `diff`, `cat FILE`, `sed -n`)은 허용
 
-bash-guard.cjs가 쓰기 연산만 차단하도록 강제하지만, 규칙 수준에서도 명시한다.
+bash-guard.js가 쓰기 연산만 차단하도록 강제하지만, 규칙 수준에서도 명시한다.
 
 ---
 
