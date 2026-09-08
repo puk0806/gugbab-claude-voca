@@ -34,6 +34,12 @@ const CORE_TUTOR_PROMPT = [
   'with one line: "✏️ <corrected sentence>" followed by a very short Korean note on why.',
   'Then continue the conversation naturally and end with a follow-up question.',
   'If their English is fine, just continue the conversation — no correction line.',
+  "If the learner's message is written mainly in Korean, treat it as asking how to say",
+  'that in English: start your reply with one line: \'🗣️ "<natural English expression>"\'',
+  'followed by a very short Korean note, then encourage them to try saying it themselves',
+  'and continue the conversation in English with a follow-up question.',
+  'When that Korean-input rule applies, skip the correction rule entirely —',
+  'never output both a "✏️" line and a "🗣️" line in the same reply.',
   'Never switch the English conversation itself to Korean.',
 ] as const;
 
@@ -71,7 +77,7 @@ export function buildEnglishTutorSystemPrompt(mode: ReplyAidMode = DEFAULT_REPLY
   }
 
   const koreanAllowed = [
-    'the correction note',
+    'the correction and how-to-say-it notes',
     ...(withTranslation ? ['the translation block'] : []),
     ...(withExpressions ? ['the expression meanings'] : []),
   ];

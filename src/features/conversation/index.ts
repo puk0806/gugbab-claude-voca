@@ -11,11 +11,20 @@ export {
   DEFAULT_REPLY_AID_MODE,
   MAX_HISTORY,
 } from './chatRequest';
+export type { MicLang } from './micLang';
+export {
+  DEFAULT_MIC_LANG,
+  loadMicLang,
+  MIC_LANG_LABELS,
+  MIC_LANGS,
+  saveMicLang,
+} from './micLang';
 export {
   loadReplyAidMode,
   REPLY_AID_MODE_LABELS,
   REPLY_AID_MODES,
   saveReplyAidMode,
 } from './replyAidMode';
+export { extractSpokenEnglish } from './spokenReply';
 export type { ConversationStatus, UseConversationResult } from './useConversation';
 export { useConversation } from './useConversation';
