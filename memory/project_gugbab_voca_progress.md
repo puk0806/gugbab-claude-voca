@@ -3,7 +3,7 @@ name: gugbab-voca 진행 상태
 description: 2026-05-16 기준 Phase 0~7 완료(전 레벨 콘텐츠 + Vercel 배포), 다음=Phase 8 P2 보강
 type: project
 originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
-modified: 2026-09-04T04:51:39.473Z
+modified: 2026-09-08T00:53:13.240Z
 ---
 # 진행 상태 (2026-05-16 기준)
 
@@ -34,6 +34,7 @@ modified: 2026-09-04T04:51:39.473Z
 | 8-3 | **홈 재구성 + 대화 연습(relay)** — ① 홈 3택(대화/단어/문장)·`/cards/:cardType`→난이도→모드 흐름, Level.tsx 삭제 ② `/conversation` 채팅: `@gugbab/hooks` useSSEChat + Dexie **v2 chatMessage** + `api/chat.ts` 서버리스 프록시(RELAY_SECRET) + vite dev proxy. relay `english` 타입·systemPrompt는 앱이 전송 ③ 전체 리뷰 10건→9건 수정 (**StrictMode 이중마운트로 assistant 저장 차단되던 치명 버그** — e2e가 발견, `tsc -b` 교정: 기존 typecheck는 빈 실행이었음, 벌크 진도 조회 `getProgressSummariesByType`) ④ 적대 테스트: relay mock Playwright e2e 7개(XSS·장애·영속) + unit 6개(IME·연타) ⑤ **마이크 영어 STT** (`speech.ts` — 04 health의 speech 모듈 포팅, lang=en-US, interim 힌트/final만 입력 반영, 미지원 시 버튼 숨김). **미완**: relay 실연동 검증(relay 이슈로 보류), Vercel env(RELAY_URL·RELAY_SECRET) 등록은 사용자 진행 | ✅ 2026-07-21 (`feature/home-restructure`) |
 | 개선 | **대화 답변 부가 정보 라디오 모드** — ① systemPrompt를 `buildEnglishTutorSystemPrompt(mode)` 조립 함수로 리팩터링 (`ReplyAidMode: none/translation/expressions/both`) ② 답변 뒤 (전체 한국어 해석) + 📌 핵심 표현(`- 표현 — 뜻` 2~4개) 블록을 모드에 따라 지시 ③ 대화 상단 pill 라디오 4택(영어만/해석/핵심표현/둘 다, 기본 둘 다) + localStorage 영속(`replyAidMode.ts`) ④ 테스트 14개 추가·갱신 458/458 · Codex 리뷰 무결함. **미검증**: relay 실연동 형식 확인은 배포 후 | ✅ 2026-08-10 (`feature/conversation-reply-format`) |
 | 개선 | **마이크 STT 공통 훅 교체** — 로컬 `speech.ts` 삭제 → `@gugbab/hooks@1.3.0` `useSpeechRecognition({lang:'en-US', onFinal})` 적용 (상태 관리·stale 가드·언마운트 abort 훅 내장). 앱 경계 STT 계약 테스트 3개 추가(스트리밍 abort+UI 해제·에러 정규화·final+interim 배치). 주의: **pnpm 프로젝트** — npm install 금지(arborist가 .pnpm 레이아웃에서 크래시) | ✅ 2026-09-04 (`feature/common-speech-hook`) |
+| 개선 | **대화 음성 UX 3종** (`feature/korean-mic-expression-help`) — ① 마이크 EN/한 토글(`micLang.ts`, ko-KR 인식·localStorage 영속·청취 중 토글 시 abort+에러 배너 dismiss) ② systemPrompt 한국어 입력→`🗣️ "<영어 표현>"` 안내 규칙(✏️와 동시 출력 금지 명시) ③ 답변 TTS — 로컬 `src/tts/` 삭제→`@gugbab/hooks@1.3.0` `useSpeak`(Learn.tsx 포함), `extractSpokenEnglish`(한글 라인·✏️🗣️📌 블록 제거), 말풍선 🔊(전환/정지), 자동 읽기 토글(기본 ON, 히스토리 로드분은 미발화 시드), 마이크·전송·새대화 시 TTS 정지. 테스트 463/463. **Codex CLI 고장**(전 모델 계정 400 — config.toml `model="gpt-5.4"` 문제 추정, CLI 업데이트/모델 라인 제거 필요) → pr-reviewer 대체 적대 리뷰 2회(Critical 1건 수정). **실사용 미검증**: relay 🗣️ 응답 품질·ko-KR 실발화·iOS 자동 읽기(제스처 제약 무음 가능, 🔊 수동이 폴백) | ✅ 2026-09-08 |
 | 9 | 콘텐츠 audit·수정 (사용 후 피드백 기반) | — |
 
 ## 콘텐츠 최종 상태 (2026-05-16)

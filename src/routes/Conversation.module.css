@@ -198,3 +198,40 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.micLangButton {
+  padding: 12px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--gugbab-color-border-base);
+  background: var(--gugbab-color-bg-surface);
+  color: var(--gugbab-color-fg-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.micLangButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.speakButton {
+  display: block;
+  margin-top: 6px;
+  padding: 2px 6px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.7;
+}

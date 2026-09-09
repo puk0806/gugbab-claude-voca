@@ -3,8 +3,14 @@ name: gugbab-voca VR 워크플로우 운영 정보
 description: GitHub Actions visual-regression 동작 방식·라벨·ruleset·main 보호 룰 — sibling 패턴 미러링
 type: reference
 originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
+modified: 2026-09-08T01:33:49.133Z
 ---
 # VR 워크플로우 운영 정보
+
+> **2026-09-08 오차 설정 교훈**: `maxDiffPixelRatio: 0.01`(1%)은 여백 많은 풀페이지에서
+> 라디오 그룹 추가 같은 실제 UI 변화(~7,200px≈0.7%)까지 흡수해 PR #26~#28 동안 감지 실패.
+> `maxDiffPixels: 500` 절대값으로 교체 (compare는 CI Linux↔Linux 결정적이라 좁게 잡아도 안전).
+> 새 UI 추가 PR인데 VR이 "no diff 통과"면 이 설정부터 의심할 것.
 
 **Why**: PR 시각 검증 흐름을 매번 떠올리지 않고 즉시 참조하기 위함. sibling 프로젝트(`01_gugbab-claude-package`) 패턴을 본 프로젝트에 맞게 단순화한 형태.
 

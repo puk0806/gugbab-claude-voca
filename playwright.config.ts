@@ -32,8 +32,10 @@ export default defineConfig({
 
   expect: {
     toHaveScreenshot: {
-      // OS 폰트 차이 등 미세 노이즈 흡수
-      maxDiffPixelRatio: 0.01,
+      // 비교는 CI(Linux) 베이스라인 ↔ CI 렌더로만 일어나 결정적이므로 오차를 좁게 잡는다.
+      // 이전 maxDiffPixelRatio: 0.01(전체의 1%)은 여백 많은 풀페이지에서 라디오 그룹
+      // 추가 같은 실제 UI 변화(~0.8%)까지 흡수해 감지 실패했다 (2026-09-08 발견).
+      maxDiffPixels: 500,
       threshold: 0.2,
       animations: 'disabled',
     },

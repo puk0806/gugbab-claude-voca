@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UseConversationResult } from '@/features/conversation';
 
 const sendMessage = vi.fn(async () => {});
@@ -136,6 +136,7 @@ describe('<Conversation> 마이크 입력', () => {
   }) => void;
 
   let lastRec: {
+    lang: string;
     onresult: OnResult | null;
     onend: (() => void) | null;
     onerror: ((event: { error: string }) => void) | null;
@@ -162,6 +163,7 @@ describe('<Conversation> 마이크 입력', () => {
     hookResult = makeResult();
     startMock.mockClear();
     lastRec = null;
+    localStorage.clear();
   });
 
   it('음성 인식 미지원 환경(jsdom 기본)에서는 마이크 버튼이 없다', () => {
@@ -280,5 +282,327 @@ describe('<Conversation> 마이크 입력', () => {
     } finally {
       Reflect.deleteProperty(window, 'SpeechRecognition');
     }
+  });
+  it('언어 토글: 기본 EN(en-US), 클릭 시 한(ko-KR)으로 전환·저장되고 인식 lang 에 반영된다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      const langBtn = await screen.findByRole('button', { name: '음성 인식 언어 전환' });
+      expect(langBtn).toHaveTextContent('EN');
+
+      // 기본 언어로 시작 → en-US
+      await userEvent.click(screen.getByRole('button', { name: '음성 입력' }));
+      expect(lastRec?.lang).toBe('en-US');
+      await userEvent.click(screen.getByRole('button', { name: '음성 입력 중지' }));
+
+      // 토글 → 한국어 저장 + 다음 세션 ko-KR
+      await userEvent.click(langBtn);
+      expect(langBtn).toHaveTextContent('한');
+      expect(localStorage.getItem('gugbab-voca:micLang')).toBe('ko-KR');
+      await userEvent.click(screen.getByRole('button', { name: '음성 입력' }));
+      expect(lastRec?.lang).toBe('ko-KR');
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('청취 중 언어 토글 시 진행 세션을 abort 하고 시작 라벨로 복귀한다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      const active = lastRec;
+      await userEvent.click(screen.getByRole('button', { name: '음성 인식 언어 전환' }));
+      expect(active?.abort).toHaveBeenCalled();
+      expect(screen.getByRole('button', { name: '음성 입력' })).toBeInTheDocument();
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('저장된 마이크 언어(ko-KR)를 초기값으로 복원한다', async () => {
+    localStorage.setItem('gugbab-voca:micLang', 'ko-KR');
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      const langBtn = await screen.findByRole('button', { name: '음성 인식 언어 전환' });
+      expect(langBtn).toHaveTextContent('한');
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+  it('언어 전환 후 이전 세션의 늦은 콜백은 입력·힌트를 오염시키지 않는다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      const staleRec = lastRec;
+
+      // 청취 중 언어 토글 → 이전 세션 abort, 새(ko-KR) 세션 시작
+      await userEvent.click(screen.getByRole('button', { name: '음성 인식 언어 전환' }));
+      await userEvent.click(screen.getByRole('button', { name: '음성 입력' }));
+      expect(lastRec).not.toBe(staleRec);
+
+      // 이전 인스턴스의 지연 final/onend 발화 — 무시되어야 한다
+      staleRec?.onresult?.({
+        results: { length: 1, 0: { isFinal: true, 0: { transcript: 'stale text' } } },
+        resultIndex: 0,
+      });
+      staleRec?.onend?.();
+      expect(screen.getByRole('textbox', { name: '메시지 입력' })).toHaveValue('');
+      // 새 세션은 계속 청취 중 (stale onend 가 listening 을 뒤집지 않음)
+      expect(screen.getByRole('button', { name: '음성 입력 중지' })).toBeInTheDocument();
+
+      // 새 세션 결과는 정상 반영
+      lastRec?.onresult?.({
+        results: { length: 1, 0: { isFinal: true, 0: { transcript: '안녕하세요' } } },
+        resultIndex: 0,
+      });
+      await waitFor(() => {
+        expect(screen.getByRole('textbox', { name: '메시지 입력' })).toHaveValue('안녕하세요');
+      });
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('언어 토글 시 이전 언어의 에러 배너를 숨긴다 (새 세션 에러는 다시 표시)', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      lastRec?.onerror?.({ error: 'no-speech' });
+      lastRec?.onend?.();
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('음성이 감지되지 않았습니다');
+      });
+
+      // 언어 토글 → 이전 에러 배너 숨김
+      await userEvent.click(screen.getByRole('button', { name: '음성 인식 언어 전환' }));
+      await waitFor(() => {
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      });
+
+      // 새 세션에서 다시 에러 → 다시 표시
+      await userEvent.click(screen.getByRole('button', { name: '음성 입력' }));
+      lastRec?.onerror?.({ error: 'network' });
+      lastRec?.onend?.();
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('네트워크 오류');
+      });
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+
+  it('스트리밍 중에는 언어 토글 버튼이 비활성화된다', async () => {
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      hookResult = makeResult({ status: 'streaming', streamingText: '...' });
+      renderConversation();
+      const langBtn = await screen.findByRole('button', { name: '음성 인식 언어 전환' });
+      expect(langBtn).toBeDisabled();
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+});
+describe('<Conversation> 스피커(TTS)', () => {
+  const speakMock = vi.fn();
+  const cancelMock = vi.fn();
+
+  beforeEach(() => {
+    speakMock.mockClear();
+    cancelMock.mockClear();
+    localStorage.clear();
+    hookResult = makeResult();
+    Reflect.set(window, 'speechSynthesis', {
+      speak: speakMock,
+      cancel: cancelMock,
+      getVoices: () => [],
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    });
+    Reflect.set(
+      window,
+      'SpeechSynthesisUtterance',
+      class {
+        text: string;
+        lang = '';
+        rate = 1;
+        constructor(text: string) {
+          this.text = text;
+        }
+        addEventListener() {}
+      },
+    );
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'speechSynthesis');
+    Reflect.deleteProperty(window, 'SpeechSynthesisUtterance');
+  });
+
+  function lastSpokenText(): string {
+    const utter = speakMock.mock.calls.at(-1)?.[0] as { text: string } | undefined;
+    return utter?.text ?? '';
+  }
+
+  it('assistant 말풍선에 🔊 버튼이 있고, 클릭 시 영어 부분만 발화한다', async () => {
+    hookResult = makeResult({
+      messages: [
+        { id: 1, role: 'user', content: 'Hi', createdAt: 1 },
+        {
+          id: 2,
+          role: 'assistant',
+          content:
+            'Nice to meet you!\n\n(만나서 반가워요!)\n\n📌 핵심 표현\n- nice to meet you — 만나서 반갑다',
+          createdAt: 2,
+        },
+      ],
+    });
+    renderConversation();
+    const btn = await screen.findByRole('button', { name: '영어 대답 듣기' });
+    await userEvent.click(btn);
+    expect(lastSpokenText()).toBe('Nice to meet you!');
+  });
+
+  it('자동 읽기 ON(기본): 새 assistant 메시지가 오면 영어 부분을 자동 발화한다', async () => {
+    const { rerender } = renderConversation();
+    hookResult = makeResult({
+      messages: [
+        { id: 1, role: 'user', content: 'Hi', createdAt: 1 },
+        { id: 2, role: 'assistant', content: 'Hello there!\n\n(안녕하세요!)', createdAt: 2 },
+      ],
+    });
+    rerender(
+      <MemoryRouter>
+        <Conversation />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(lastSpokenText()).toBe('Hello there!');
+    });
+    // 같은 메시지 재렌더에 중복 발화하지 않는다
+    const count = speakMock.mock.calls.length;
+    rerender(
+      <MemoryRouter>
+        <Conversation />
+      </MemoryRouter>,
+    );
+    expect(speakMock.mock.calls.length).toBe(count);
+  });
+
+  it('자동 읽기 토글 OFF 시 새 답변을 발화하지 않고, 설정이 저장된다', async () => {
+    const { rerender } = renderConversation();
+    const toggle = await screen.findByRole('switch', { name: '답변 자동 읽기' });
+    await userEvent.click(toggle);
+    expect(localStorage.getItem('gugbab-voca:autoSpeak')).toBe('off');
+
+    hookResult = makeResult({
+      messages: [
+        { id: 1, role: 'user', content: 'Hi', createdAt: 1 },
+        { id: 2, role: 'assistant', content: 'Quiet reply.', createdAt: 2 },
+      ],
+    });
+    rerender(
+      <MemoryRouter>
+        <Conversation />
+      </MemoryRouter>,
+    );
+    expect(speakMock).not.toHaveBeenCalled();
+  });
+
+  it('저장된 OFF 설정을 초기값으로 복원한다', async () => {
+    localStorage.setItem('gugbab-voca:autoSpeak', 'off');
+    renderConversation();
+    const toggle = await screen.findByRole('switch', { name: '답변 자동 읽기' });
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('마이크 시작 시 진행 중이던 발화를 정지한다 (재인식 루프 차단)', async () => {
+    class MockRecognition {
+      lang = '';
+      continuous = false;
+      interimResults = true;
+      onresult = null;
+      onend = null;
+      onerror = null;
+      start = vi.fn();
+      stop = vi.fn();
+      abort = vi.fn();
+    }
+    Reflect.set(window, 'SpeechRecognition', MockRecognition);
+    try {
+      renderConversation();
+      cancelMock.mockClear();
+      await userEvent.click(await screen.findByRole('button', { name: '음성 입력' }));
+      expect(cancelMock).toHaveBeenCalled();
+    } finally {
+      Reflect.deleteProperty(window, 'SpeechRecognition');
+    }
+  });
+  it('마운트 시 로드된 과거 히스토리의 마지막 답변은 자동 발화하지 않는다', async () => {
+    // 실제 useConversation 의 하이드레이션과 동일하게 ready=false → true + 히스토리 동시 반영
+    hookResult = makeResult({ ready: false });
+    const { rerender } = renderConversation();
+    hookResult = makeResult({
+      ready: true,
+      messages: [
+        { id: 1, role: 'user', content: 'Hi', createdAt: 1 },
+        { id: 2, role: 'assistant', content: 'Old reply from yesterday.', createdAt: 2 },
+      ],
+    });
+    rerender(
+      <MemoryRouter>
+        <Conversation />
+      </MemoryRouter>,
+    );
+    await screen.findByText('Old reply from yesterday.');
+    expect(speakMock).not.toHaveBeenCalled();
+
+    // 이후 새로 도착한 답변은 읽는다
+    hookResult = makeResult({
+      ready: true,
+      messages: [
+        { id: 1, role: 'user', content: 'Hi', createdAt: 1 },
+        { id: 2, role: 'assistant', content: 'Old reply from yesterday.', createdAt: 2 },
+        { id: 3, role: 'user', content: 'More', createdAt: 3 },
+        { id: 4, role: 'assistant', content: 'Fresh reply!', createdAt: 4 },
+      ],
+    });
+    rerender(
+      <MemoryRouter>
+        <Conversation />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(lastSpokenText()).toBe('Fresh reply!');
+    });
+  });
+
+  it('재생 중 다른 말풍선 🔊 클릭 시 그 답변으로 전환 재생, 같은 말풍선은 정지한다', async () => {
+    hookResult = makeResult({
+      messages: [
+        { id: 1, role: 'assistant', content: 'First answer.', createdAt: 1 },
+        { id: 2, role: 'assistant', content: 'Second answer.', createdAt: 2 },
+      ],
+    });
+    renderConversation();
+    const buttons = await screen.findAllByRole('button', { name: '영어 대답 듣기' });
+
+    // 첫 말풍선 재생 시작 (mock 이 end 이벤트를 안 쏘므로 speaking 유지)
+    await userEvent.click(buttons[0] as HTMLElement);
+    expect(lastSpokenText()).toBe('First answer.');
+
+    // 다른 말풍선 클릭 → 정지가 아니라 전환 재생
+    await userEvent.click(buttons[1] as HTMLElement);
+    expect(lastSpokenText()).toBe('Second answer.');
+
+    // 같은 말풍선 재클릭 → 정지 (speak 추가 호출 없음)
+    const calls = speakMock.mock.calls.length;
+    await userEvent.click(buttons[1] as HTMLElement);
+    expect(cancelMock).toHaveBeenCalled();
+    expect(speakMock.mock.calls.length).toBe(calls);
   });
 });

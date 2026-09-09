@@ -45,6 +45,15 @@ describe('buildEnglishTutorSystemPrompt', () => {
     }
   });
 
+  it('모든 모드에 한국어 입력 → 영어 표현 안내(🗣️) 규칙이 들어 있다', () => {
+    for (const mode of ['none', 'translation', 'expressions', 'both'] as const) {
+      const prompt = buildEnglishTutorSystemPrompt(mode);
+      expect(prompt).toMatch(/mainly in Korean/);
+      expect(prompt).toContain('🗣️');
+      expect(prompt).toContain('never output both a "✏️" line and a "🗣️" line');
+    }
+  });
+
   it('both: 한국어 해석 + 핵심 표현 블록 지침이 모두 들어 있다', () => {
     const prompt = buildEnglishTutorSystemPrompt('both');
     expect(prompt).toMatch(/Korean translation/);
@@ -70,7 +79,7 @@ describe('buildEnglishTutorSystemPrompt', () => {
     const prompt = buildEnglishTutorSystemPrompt('none');
     expect(prompt).not.toContain('(한국어 해석)');
     expect(prompt).not.toContain('📌 핵심 표현');
-    expect(prompt).toContain('Only the correction note may use Korean.');
+    expect(prompt).toContain('Only the correction and how-to-say-it notes may use Korean.');
   });
 
   it('mode 생략 시 both 와 동일하다 (기본값)', () => {
