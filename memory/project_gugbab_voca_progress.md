@@ -1,15 +1,15 @@
 ---
 name: gugbab-voca 진행 상태
-description: 2026-05-16 기준 Phase 0~7 완료(전 레벨 콘텐츠 + Vercel 배포), 다음=Phase 8 P2 보강
+description: 2026-09-09 기준 대화 음성 UX(PR #28)까지 머지·배포, 사용자 실기기 테스트 중 — 피드백 기반 추가 작업 대기
 type: project
 originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
-modified: 2026-09-08T00:53:13.240Z
+modified: 2026-10-01T08:20:50.616Z
 ---
-# 진행 상태 (2026-05-16 기준)
+# 진행 상태 (2026-09-09 기준)
 
 **Why**: 다음 세션이 이 메모리부터 읽고 정확히 이어서 진행하기 위함.
 
-**How to apply**: 세션 시작 시 이 메모리부터 확인. 다음 작업 = Phase 8 (P2 보강).
+**How to apply**: 세션 시작 시 이 메모리부터 확인. 현재 = 대화 음성 UX(PR #28) 배포 후 사용자 실기기 테스트 중 — 다음 작업은 사용자 피드백 기반 추가 요청 또는 Phase 8-2 (P2 보강).
 
 ## Phase 진행 표
 
@@ -34,7 +34,8 @@ modified: 2026-09-08T00:53:13.240Z
 | 8-3 | **홈 재구성 + 대화 연습(relay)** — ① 홈 3택(대화/단어/문장)·`/cards/:cardType`→난이도→모드 흐름, Level.tsx 삭제 ② `/conversation` 채팅: `@gugbab/hooks` useSSEChat + Dexie **v2 chatMessage** + `api/chat.ts` 서버리스 프록시(RELAY_SECRET) + vite dev proxy. relay `english` 타입·systemPrompt는 앱이 전송 ③ 전체 리뷰 10건→9건 수정 (**StrictMode 이중마운트로 assistant 저장 차단되던 치명 버그** — e2e가 발견, `tsc -b` 교정: 기존 typecheck는 빈 실행이었음, 벌크 진도 조회 `getProgressSummariesByType`) ④ 적대 테스트: relay mock Playwright e2e 7개(XSS·장애·영속) + unit 6개(IME·연타) ⑤ **마이크 영어 STT** (`speech.ts` — 04 health의 speech 모듈 포팅, lang=en-US, interim 힌트/final만 입력 반영, 미지원 시 버튼 숨김). **미완**: relay 실연동 검증(relay 이슈로 보류), Vercel env(RELAY_URL·RELAY_SECRET) 등록은 사용자 진행 | ✅ 2026-07-21 (`feature/home-restructure`) |
 | 개선 | **대화 답변 부가 정보 라디오 모드** — ① systemPrompt를 `buildEnglishTutorSystemPrompt(mode)` 조립 함수로 리팩터링 (`ReplyAidMode: none/translation/expressions/both`) ② 답변 뒤 (전체 한국어 해석) + 📌 핵심 표현(`- 표현 — 뜻` 2~4개) 블록을 모드에 따라 지시 ③ 대화 상단 pill 라디오 4택(영어만/해석/핵심표현/둘 다, 기본 둘 다) + localStorage 영속(`replyAidMode.ts`) ④ 테스트 14개 추가·갱신 458/458 · Codex 리뷰 무결함. **미검증**: relay 실연동 형식 확인은 배포 후 | ✅ 2026-08-10 (`feature/conversation-reply-format`) |
 | 개선 | **마이크 STT 공통 훅 교체** — 로컬 `speech.ts` 삭제 → `@gugbab/hooks@1.3.0` `useSpeechRecognition({lang:'en-US', onFinal})` 적용 (상태 관리·stale 가드·언마운트 abort 훅 내장). 앱 경계 STT 계약 테스트 3개 추가(스트리밍 abort+UI 해제·에러 정규화·final+interim 배치). 주의: **pnpm 프로젝트** — npm install 금지(arborist가 .pnpm 레이아웃에서 크래시) | ✅ 2026-09-04 (`feature/common-speech-hook`) |
-| 개선 | **대화 음성 UX 3종** (`feature/korean-mic-expression-help`) — ① 마이크 EN/한 토글(`micLang.ts`, ko-KR 인식·localStorage 영속·청취 중 토글 시 abort+에러 배너 dismiss) ② systemPrompt 한국어 입력→`🗣️ "<영어 표현>"` 안내 규칙(✏️와 동시 출력 금지 명시) ③ 답변 TTS — 로컬 `src/tts/` 삭제→`@gugbab/hooks@1.3.0` `useSpeak`(Learn.tsx 포함), `extractSpokenEnglish`(한글 라인·✏️🗣️📌 블록 제거), 말풍선 🔊(전환/정지), 자동 읽기 토글(기본 ON, 히스토리 로드분은 미발화 시드), 마이크·전송·새대화 시 TTS 정지. 테스트 463/463. **Codex CLI 고장**(전 모델 계정 400 — config.toml `model="gpt-5.4"` 문제 추정, CLI 업데이트/모델 라인 제거 필요) → pr-reviewer 대체 적대 리뷰 2회(Critical 1건 수정). **실사용 미검증**: relay 🗣️ 응답 품질·ko-KR 실발화·iOS 자동 읽기(제스처 제약 무음 가능, 🔊 수동이 폴백) | ✅ 2026-09-08 |
+| 개선 | **대화 음성 UX 3종** (PR #28, 2026-09-09 머지·배포 확인) — ① 마이크 EN/한 토글(`micLang.ts`, ko-KR 인식·localStorage 영속·청취 중 토글 시 abort+에러 배너 dismiss) ② systemPrompt 한국어 입력→`🗣️ "<영어 표현>"` 안내 규칙(✏️와 동시 출력 금지 명시) ③ 답변 TTS — 로컬 `src/tts/` 삭제→`@gugbab/hooks@1.3.0` `useSpeak`(Learn.tsx 포함), `extractSpokenEnglish`(한글 라인·✏️🗣️📌 블록 제거), 말풍선 🔊(전환/정지), 자동 읽기 토글(기본 ON, 히스토리 로드분은 미발화 시드), 마이크·전송·새대화 시 TTS 정지. 테스트 463/463 · 배포 번들 마커 6/6 확인. **Codex CLI 고장**(전 모델 계정 400 — config.toml `model="gpt-5.4"` 문제 추정, CLI 업데이트/모델 라인 제거 필요) → pr-reviewer 대체 적대 리뷰 2회(Critical 1건 수정). 같은 PR에서 **VR 오차 수정**(`maxDiffPixels: 500`) + 낡은 베이스라인(7월 홈 그리드) accept-baseline 으로 최신화. **사용자 실기기 테스트 진행 중**: relay 🗣️ 응답 품질·ko-KR 실발화·iOS 자동 읽기(제스처 제약 무음 가능, 🔊 수동이 폴백) — 피드백 후 추가 요청 예정 | ✅ 머지 완료 |
+| 인프라 | **@gugbab 업그레이드 + CI 보호 통일** (`feature/pkg-upgrade-ci-hardening`, 01 레포 세션 요청) — ① hooks 1.3.1·styled-mui 1.1.0·tokens 1.1.0 (frozen install·463 테스트·e2e 7/7·build 검증) ② `ci.yml` 신설(필수 검사 `ci`: install→biome ci→typecheck→test→build, 액션 SHA 고정) ③ VR 워크플로우 보안 강화(event→env·head.sha checkout·refs/heads push) + accept 커밋 ci 상태 승계 ④ archive→`vrt-archive` 브랜치 ⑤ biome ci 게이트 정비(`public/data` 제외, 포맷 미준수 5파일 수정) ⑥ 10-01 sync 감사: 생성·검증 룰/creator 에이전트 00 이관 수용(32 에이전트·111 스킬·훅 19), **실사용 `react-virtuoso` 스킬 복원**, CLAUDE.md 깨진 rules 참조 정리. **머지 후**: 01 세션에 SendMessage → voca ruleset 적용 (순서 중요: 먼저 적용하면 PR 전부 차단) | ⏳ PR 대기 |
 | 9 | 콘텐츠 audit·수정 (사용 후 피드백 기반) | — |
 
 ## 콘텐츠 최종 상태 (2026-05-16)

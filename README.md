@@ -46,15 +46,15 @@
 │   └── skills/                # 스킬 verification 문서
 └── .claude/
     ├── rules/                 # 코딩·작업 규칙
-    ├── hooks/                 # 자동화 훅 20개 (CJS — hooks/package.json 마커)
+    ├── hooks/                 # 자동화 훅 19개 (CJS — hooks/package.json 마커)
     ├── commands/              # 슬래시 커맨드 10개
-    ├── agents/                # 35개 에이전트
-    └── skills/                # 112개 스킬
+    ├── agents/                # 32개 에이전트
+    └── skills/                # 111개 스킬
 ```
 
 ---
 
-## 에이전트 (35개)
+## 에이전트 (32개)
 
 | 카테고리 | 에이전트 |
 |---|---|
@@ -62,23 +62,23 @@
 | `frontend` (2) | `frontend-architect`, `frontend-developer` |
 | `backend` (3) | `build-error-resolver`, `typescript-backend-architect`, `typescript-backend-developer` |
 | `devops` (1) | `devops-engineer` |
-| `meta` (8) | `agent-creator`, `skill-creator`, `skill-tester`, `freshness-auditor`, `claude-code-guide`, `changelog-writer`, `project-scaffolder`, `tech-stack-advisor` |
+| `meta` (5) | `freshness-auditor`, `claude-code-guide`, `changelog-writer`, `project-scaffolder`, `tech-stack-advisor` |
 | `research` (5) | `deep-researcher`, `web-searcher`, `competitor-analyst`, `data-analyst`, `research-reviewer` |
 | `validation` (10) | `qa-engineer`, `fact-checker`, `source-validator`, `pr-reviewer`, `a11y-auditor`, `security-auditor`, `seo-auditor`, `content-quality-reviewer`, `build-perf-benchmarker`, `perf-report-writer` |
 
 ---
 
-## 스킬 (112개)
+## 스킬 (111개)
 
 | 카테고리 | 개수 | 주요 항목 |
 |---|---|---|
-| `frontend` | 81 | React/TypeScript/Vite 중심 + SEO 스위트. 본 프로젝트 핵심: `web-speech-api-tts`, `web-speech-api-stt`, `srs-spaced-repetition`, `indexeddb-dexie` |
-| `devops` | 10 | `docker-deployment`, `github-actions(+VR)`, `vercel-sandbox`, n8n 4종, `site-migration-seo` |
-| `meta` | 6 | `claude-code-hook-authoring`, `ralph-loop`, `riper-workflow`, dream 프롬프트 3종 |
+| `frontend` | 76 | React/TypeScript/Vite 중심 + SEO 스위트. 본 프로젝트 핵심: `web-speech-api-tts`, `web-speech-api-stt`, `srs-spaced-repetition`, `indexeddb-dexie`, `react-virtuoso` |
+| `devops` | 11 | `docker-deployment`, `github-actions(+VR)`, `vercel-sandbox`, `vercel-workflow`, n8n 4종 |
+| `backend` | 6 | `claude-code-headless`, `better-auth`, `drizzle-neon-postgres`, `hono-api-patterns`, `prisma-orm`, `zod-schema-validation` |
 | `architecture` | 5 | `ddd`, `frontend-domain-structure`, `module-boundaries`, `incremental-refactoring` 등 |
 | `health` | 5 | 식단·영양 분석 프롬프트 (형제 앱 도메인) |
+| `meta` | 4 | `claude-code-hook-authoring`, dream 프롬프트 3종 |
 | `writing` | 4 | `content-eeat-quality`, `ymyl-content-seo` 등 |
-| `backend` | 1 | `claude-code-headless` |
 
 frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 
@@ -144,3 +144,4 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 | 2026-05-16 | **Phase 7 A2~C2 콘텐츠 확장 완료**: 신규 2,338단어 + 900문장 (A2 518/200, B1 500/200, B2 502/200, C1 407/150, C2 411/150). 4종 자료(NGSL-Spoken·Cambridge EVP·Oxford 3000/5000·EVP) 교차 검증. cloze 정합성 자동 검증 vitest test 도입(누적 lemma 풀, 활용형·기능어·불규칙 화이트리스트 — 6/6 PASS). 5개 레벨 검증 보고서. 출처 답습 흔적 0건 |
 | 2026-05-16 | **Phase 8-1 헤더 install prompt 버튼**: `useInstallPrompt` 훅(beforeinstallprompt + display-mode standalone + iOS Safari 감지). 환경별 분기 — Android Chrome·Desktop Chrome/Edge는 native install 다이얼로그, iOS Safari는 "공유 → 홈 화면에 추가" 4단계 안내 모달, 이미 설치된 standalone 모드는 자동 숨김. ESC·backdrop 클릭 모달 닫기. 단위 테스트 15/15 PASS (iOS·Android·Desktop·standalone·미지원 시나리오 모두) |
 | 2026-09-04 | **공유 설정 레포(00_gugbab-claude) sync 대규모 반영**: 훅 스위트 .cjs→.js 전면 교체(20개, `hooks/package.json` commonjs 마커로 type:module 호환) + tdd-guard→adversarial-test-guard/fake-impl-guard 재설계, 슬래시 커맨드 10종 레포 내 반영, 에이전트 27→35(±: planner·mvp-scope-planner·spec-writer·seo-content-writer-coach·socratic-interviewer 제거, backend 2종·validation 7종·meta 3종·frontend-domain-refactorer 추가), 스킬 48→112(architecture·health·writing 카테고리 신설, SEO 스위트 등), rules 갱신(adversarial-testing 신설·codex-review 컴패니언 경로). README 카탈로그 동기화 |
+| 2026-10-01 | **@gugbab 업그레이드 + CI 보호 통일 + 공유 설정 sync 반영**: hooks 1.3.1·styled-mui 1.1.0·tokens 1.1.0 / ci.yml 신설(필수 검사 `ci`, 액션 SHA 고정)·visual-regression.yml 보안 강화(event→env·head.sha·refs/heads push·ci 상태 승계)·archive-vr-diffs → `vrt-archive` 브랜치 보관 / sync: 생성·검증 룰과 creator 에이전트 3종을 00 레포로 이관(에이전트 35→32), 스킬 재편 112→111(backend 5종·vercel-workflow·next-intl-i18n 추가, 미사용 9종 제거 — 실사용 중인 `react-virtuoso`는 복원), 훅 자립화(_lib.js 제거, 19개). CLAUDE.md 깨진 rules 참조 정리 |
