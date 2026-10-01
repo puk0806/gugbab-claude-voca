@@ -55,11 +55,11 @@ UI 패키지 npm 퍼블릭 배포 완료 — `@gugbab-ui/styled-mui` + `@gugbab-
 
 | 룰 | 요지 | 상세 |
 |---|---|---|
-| 브랜치 | `main` 직접 커밋 금지. `feature/{name}` → PR로만 머지 | @.claude/rules/workflow.md |
-| 시각 회귀(VR) | UI 산출물부터 sibling 프로젝트 패턴 미러링 | @.claude/rules/workflow.md |
+| 브랜치 | `main` 직접 커밋 금지. `feature/{name}` → PR로만 머지 | — |
+| 시각 회귀(VR) | UI 산출물부터 sibling 프로젝트 패턴 미러링 | — |
 | 커밋 분리 | `[config]`·`[skill]`·`[agent]`·`[code]`·`[docs]` 별도 | @.claude/rules/git.md |
 | 외부 정보 검증 | 공식 문서 1순위·교차 검증 필수 | @.claude/rules/info-verification.md |
-| 스킬 검증 | content test PASS / 실사용 카테고리는 PENDING_TEST 유지 | @.claude/rules/verification-policy.md |
+| 스킬 검증 | content test PASS / 실사용 카테고리는 PENDING_TEST 유지 (룰은 00 레포 관리) | — |
 
 ---
 
@@ -86,11 +86,13 @@ UI 패키지 npm 퍼블릭 배포 완료 — `@gugbab-ui/styled-mui` + `@gugbab-
 
 | 상황 | 참조 파일 |
 |---|---|
-| 작업 워크플로우 (브랜치·PR·VR) | @.claude/rules/workflow.md |
+| 작업 착수 전 확인 절차 | @.claude/rules/task-workflow.md |
 | Git 커밋 컨벤션 | @.claude/rules/git.md |
+| 커밋 시 메모리 정리 | @.claude/rules/memory-sync.md |
 | 외부 정보 조사·검증 | @.claude/rules/info-verification.md |
-| 에이전트 설계·작성 | @.claude/rules/agent-design.md |
-| 스킬·에이전트 생성 절차 | @.claude/rules/creation-workflow.md |
-| 검증 정책·APPROVED 전환 | @.claude/rules/verification-policy.md |
 | TypeScript / React 코딩 규칙 | @.claude/rules/typescript.md |
-| README 업데이트 | @.claude/rules/readme-update.md |
+| 적대적 테스트 원칙 | @.claude/rules/adversarial-testing.md |
+| Codex 적대적 리뷰 | @.claude/rules/codex-review.md |
+
+> 스킬·에이전트 생성/검증 룰(agent-design·creation-workflow·verification-policy·readme-update)은
+> 2026-10-01 sync 로 공유 설정 레포(00_gugbab-claude)로 이관 — 생성 작업은 00 레포에서 수행한다.

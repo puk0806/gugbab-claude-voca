@@ -27,15 +27,16 @@ const NON_AGENT_BASENAMES = new Set(['CLAUDE.md', 'README.md'])
 
 // 유효한 model 값 (단축명 + 전체 ID) — agent-design.md 모델 표와 동기화
 // 'fable' 별칭은 불허 — agent-design.md 규정상 frontmatter에는 전체 ID
-// claude-fable-5만 사용 (별칭 해석 미보장)
+// claude-fable-5-1만 사용 (별칭 해석 미보장)
 const VALID_MODELS = new Set([
   'opus', 'sonnet', 'haiku',
   // 현행 세대 — agent-design.md 모델 표에 문서화된 ID만 허용한다.
-  // (claude-mythos-5는 Project Glasswing 전용이고 이 레포 문서에 없어 제외)
-  'claude-fable-5',
-  'claude-opus-5', 'claude-sonnet-5',
+  // (claude-mythos-5-1은 Project Glasswing 전용이고 이 레포 문서에 없어 제외)
+  'claude-fable-5-1',
+  'claude-opus-5-5', 'claude-sonnet-5',
   'claude-haiku-4-5', 'claude-haiku-4-5-20251001',
   // 아직 서비스되는 구세대 — 레거시 대응용으로 명시할 때만 허용
+  'claude-fable-5', 'claude-opus-5',
   'claude-opus-4-6', 'claude-opus-4-7', 'claude-opus-4-8',
   'claude-sonnet-4-6',
 ])
@@ -66,7 +67,7 @@ function validate(content) {
   if (!/^tools\s*:/m.test(fm)) {
     errors.push(
       'frontmatter에 tools: 필드가 없습니다.\n' +
-      '  → 필요한 도구만 최소로 명시하세요. (agent-design.md 원칙 참조)'
+      '  → 필요한 도구만 최소로 명시하세요. (agent-design.md 원칙 참조 — 설치된 경우)'
     )
   }
 
@@ -140,15 +141,13 @@ async function main() {
     ...errors.map((e, i) => `${i + 1}. ${e}`),
     '',
     blocked
-      ? '위 항목을 수정한 내용으로 다시 저장하세요. (참조: @.claude/rules/agent-design.md)'
-      : '위 항목을 수정하세요. (참조: @.claude/rules/agent-design.md)',
+      ? '위 항목을 수정한 내용으로 다시 저장하세요. (참조: @.claude/rules/agent-design.md — 설치된 경우)'
+      : '위 항목을 수정하세요. (참조: @.claude/rules/agent-design.md — 설치된 경우)',
   ].join('\n')
 
-  if (blocked) {
-    process.stderr.write(message + '\n')
-  } else {
-    process.stdout.write(JSON.stringify({ reason: message }) + '\n')
-  }
+  // exit 2 의 메시지 채널은 stderr — PreToolUse: 도구 실행 차단 사유 / PostToolUse: Claude 에게 수정 요구 피드백.
+  // (stdout {reason} 단독은 decision:"block" 이 없어 blocking 사유로 쓰이지 않고 유실됨 — 공식 hooks 문서 Exit code 2)
+  process.stderr.write(message + '\n')
   process.exit(2)
 }
 
