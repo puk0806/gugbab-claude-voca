@@ -28,22 +28,20 @@ test.describe('PWA 메타 (dev/prod 공통)', () => {
       'href',
       /apple-touch-icon-180x180\.png/,
     );
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute(
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#1976d2');
+    await expect(page.locator('meta[name="apple-mobile-web-app-capable"]')).toHaveAttribute(
       'content',
-      '#1976d2',
+      'yes',
     );
-    await expect(
-      page.locator('meta[name="apple-mobile-web-app-capable"]'),
-    ).toHaveAttribute('content', 'yes');
-    await expect(
-      page.locator('meta[name="apple-mobile-web-app-title"]'),
-    ).toHaveAttribute('content', 'gugbab');
+    await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute(
+      'content',
+      'gugbab',
+    );
   });
 });
 
-test.describe.skip(
-  'PWA manifest + SW + offline (prod build + preview 환경 전용)',
-  () => {
+test.describe
+  .skip('PWA manifest + SW + offline (prod build + preview 환경 전용)', () => {
     test('manifest.webmanifest 응답 + 필수 필드', async ({ page }) => {
       const response = await page.request.get('/manifest.webmanifest');
       expect(response.ok()).toBe(true);
@@ -65,11 +63,9 @@ test.describe.skip(
 
     test('Service Worker 등록 + 활성화', async ({ page }) => {
       await page.goto('/');
-      await page.waitForFunction(
-        () => navigator.serviceWorker.controller !== null,
-        null,
-        { timeout: 10_000 },
-      );
+      await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+        timeout: 10_000,
+      });
       const registration = await page.evaluate(async () => {
         const reg = await navigator.serviceWorker.getRegistration();
         return reg ? { active: !!reg.active, scope: reg.scope } : null;
@@ -81,15 +77,12 @@ test.describe.skip(
     test('오프라인 모드에서 라우트 진입 가능', async ({ page, context }) => {
       await page.goto('/');
       await page.waitForLoadState('networkidle');
-      await page.waitForFunction(
-        () => navigator.serviceWorker.controller !== null,
-        null,
-        { timeout: 10_000 },
-      );
+      await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+        timeout: 10_000,
+      });
       await context.setOffline(true);
       await page.goto('/cards/word/A1');
       // NotFound 로 빠지면 무의미한 테스트가 되므로 실제 화면 헤딩까지 확인
       await expect(page.getByRole('heading', { name: /A1 · 단어/ })).toBeVisible();
     });
-  },
-);
+  });

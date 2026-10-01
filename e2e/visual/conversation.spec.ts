@@ -38,7 +38,8 @@ test.describe('conversation — 기능 (relay mock)', () => {
   });
 
   test('적대적 응답: HTML/script 가 텍스트로만 렌더된다 (XSS 차단)', async ({ page }) => {
-    const hostile = '<img src=x onerror="document.title=\'pwned\'"> <script>document.title="pwned"</script> try this';
+    const hostile =
+      '<img src=x onerror="document.title=\'pwned\'"> <script>document.title="pwned"</script> try this';
     await mockRelay(page, [{ type: 'chunk', text: hostile }, { type: 'done' }]);
     await page.goto('/conversation');
     await send(page, 'hack me');

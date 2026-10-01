@@ -8,6 +8,7 @@
       "!**/coverage",
       "!**/node_modules",
       "!pnpm-lock.yaml",
+      "!public/data",
       "!**/.claude",
       "!docs/design/scenarios.html",
       "!docs/design/logo-drafts",
@@ -23,7 +24,12 @@
       "recommended": true,
       "suspicious": {
         "noExplicitAny": "error",
-        "noConsole": { "level": "warn", "options": { "allow": ["warn", "error"] } }
+        "noConsole": {
+          "level": "warn",
+          "options": {
+            "allow": ["warn", "error"]
+          }
+        }
       },
       "style": {
         "useImportType": "error",
