@@ -1,5 +1,5 @@
 - [gugbab-voca 프로젝트 개요](project_gugbab_voca.md) — 영어 회화 단어·문장 학습 PWA, 본인 1인용, PRD 확정·기술 스택 확정
-- [gugbab-voca 진행 상태](project_gugbab_voca_progress.md) — Phase 0~7 완료(PWA 배포 + 전 레벨 콘텐츠), 다음=Phase 8 P2 보강. 전 레벨 단어 2,987 / 문장 1,150 / cloze 정합성 100% / 배포 gugbab-claude-voca.vercel.app
+- [gugbab-voca 진행 상태](project_gugbab_voca_progress.md) — Phase 0~8-3 + 대화 음성 UX(마이크 EN/한·🗣️ 표현 안내·답변 TTS, PR #28)까지 머지·배포. 사용자 실기기 테스트 중, 피드백 기반 추가 작업 예정. 배포 gugbab-claude-voca.vercel.app
 - [gugbab-voca 미결 사항](project_gugbab_voca_open_questions.md) — SRS 알고리즘·콘텐츠 시드 등 7개, 다음 단계 진입 전 2개만 결정 필요
 - [VR 워크플로우 운영 정보](reference_vr_workflow.md) — visual-regression.yml 동작·accept-baseline 라벨·main 보호 룰·vrt-snapshots ruleset
 - [주요 경로 참조](reference_paths.md) — PRD·스킬 명세·UI 패키지 위치
