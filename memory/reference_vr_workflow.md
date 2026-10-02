@@ -3,9 +3,15 @@ name: gugbab-voca VR 워크플로우 운영 정보
 description: GitHub Actions visual-regression 동작 방식·라벨·ruleset·main 보호 룰 — sibling 패턴 미러링
 type: reference
 originSessionId: 9def3888-1fed-4fe5-be6c-d2ca92140670
-modified: 2026-09-08T01:33:49.133Z
+modified: 2026-10-01T08:51:07.524Z
 ---
 # VR 워크플로우 운영 정보
+
+> **2026-10-01 main ruleset 적용** (01 세션이 API로 적용, id 24297855): PR 필수(승인 0) +
+> 필수 검사 `ci`·`visual-regression`(strict) + 우회 없음 + 강제푸시·삭제 금지. classic 보호는 제거됨.
+> → **모든 PR은 ci·VR 둘 다 초록이어야 머지 가능.** 시각 차이는 accept-baseline 라벨 →
+> 기준 이미지 커밋이 ci 결과를 자동 승계(Carry ci result 단계)해 머지 가능.
+> diff 아카이브는 main 직접 push 불가라 `vrt-archive` 브랜치에 보관(삭제 금지 ruleset 포함).
 
 > **2026-09-08 오차 설정 교훈**: `maxDiffPixelRatio: 0.01`(1%)은 여백 많은 풀페이지에서
 > 라디오 그룹 추가 같은 실제 UI 변화(~7,200px≈0.7%)까지 흡수해 PR #26~#28 동안 감지 실패.
