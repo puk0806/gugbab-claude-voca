@@ -44,3 +44,6 @@ yarn-error.log*
 playwright-report/
 test-results/
 playwright/.cache/
+
+# 하네스는 gugbab-claude 래퍼가 제공 — 레포에 로컬 하네스를 다시 두지 않는다
+.claude/

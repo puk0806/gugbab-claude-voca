@@ -38,55 +38,15 @@
 .
 ├── CLAUDE.md                  # 프로젝트 지침
 ├── README.md
-├── docs/
-│   ├── prd/                   # 제품 명세
-│   │   ├── gugbab-voca.md            # PRD 본문
-│   │   └── gugbab-voca-skills.md     # 신규 스킬 명세 (외부 작업용)
-│   ├── agents/                # 에이전트 보조 문서
-│   └── skills/                # 스킬 verification 문서
-└── .claude/
-    ├── rules/                 # 코딩·작업 규칙
-    ├── hooks/                 # 자동화 훅 19개 (CJS — hooks/package.json 마커)
-    ├── commands/              # 슬래시 커맨드 10개
-    ├── agents/                # 32개 에이전트
-    └── skills/                # 111개 스킬
+├── src/                       # 앱 소스 (features·content·db 등)
+├── api/                       # Vercel 서버리스 함수
+├── e2e/                       # Playwright E2E·시각 회귀
+├── public/data/               # 단어·문장 콘텐츠 JSON + manifest
+├── scripts/
+└── .github/workflows/         # ci · visual-regression · archive-vr-diffs
 ```
 
----
-
-## 에이전트 (32개)
-
-| 카테고리 | 에이전트 |
-|---|---|
-| `domain` (6) | `product-planner`, `ui-ux-designer`, `api-spec-designer`, `business-domain-analyst`, `codebase-domain-analyst`, `frontend-domain-refactorer` |
-| `frontend` (2) | `frontend-architect`, `frontend-developer` |
-| `backend` (3) | `build-error-resolver`, `typescript-backend-architect`, `typescript-backend-developer` |
-| `devops` (1) | `devops-engineer` |
-| `meta` (5) | `freshness-auditor`, `claude-code-guide`, `changelog-writer`, `project-scaffolder`, `tech-stack-advisor` |
-| `research` (5) | `deep-researcher`, `web-searcher`, `competitor-analyst`, `data-analyst`, `research-reviewer` |
-| `validation` (10) | `qa-engineer`, `fact-checker`, `source-validator`, `pr-reviewer`, `a11y-auditor`, `security-auditor`, `seo-auditor`, `content-quality-reviewer`, `build-perf-benchmarker`, `perf-report-writer` |
-
----
-
-## 스킬 (111개)
-
-| 카테고리 | 개수 | 주요 항목 |
-|---|---|---|
-| `frontend` | 76 | React/TypeScript/Vite 중심 + SEO 스위트. 본 프로젝트 핵심: `web-speech-api-tts`, `web-speech-api-stt`, `srs-spaced-repetition`, `indexeddb-dexie`, `react-virtuoso` |
-| `devops` | 11 | `docker-deployment`, `github-actions(+VR)`, `vercel-sandbox`, `vercel-workflow`, n8n 4종 |
-| `backend` | 6 | `claude-code-headless`, `better-auth`, `drizzle-neon-postgres`, `hono-api-patterns`, `prisma-orm`, `zod-schema-validation` |
-| `architecture` | 5 | `ddd`, `frontend-domain-structure`, `module-boundaries`, `incremental-refactoring` 등 |
-| `health` | 5 | 식단·영양 분석 프롬프트 (형제 앱 도메인) |
-| `meta` | 4 | `claude-code-hook-authoring`, dream 프롬프트 3종 |
-| `writing` | 4 | `content-eeat-quality`, `ymyl-content-seo` 등 |
-
-frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
-
-- 빌드/배포: `vite-pwa-service-worker`, `vite-advanced-splitting`, `bundling-compiler`
-- 학습 핵심: `web-speech-api-tts`, `srs-spaced-repetition`, `indexeddb-dexie`
-- UI: `mui-v5`, `design-token-scss`, `accessibility`, `animation`
-- 상태/데이터: `state-management`, `error-handling`, `api-integration`
-- 테스트: `e2e-testing`, `testing`, `storybook-visual-testing`
+> Claude Code 하네스(공통 규칙·훅·에이전트·스킬)는 `gugbab-claude` 래퍼가 제공한다. 레포에 `.claude/` 를 두지 않는다.
 
 ---
 
@@ -94,11 +54,9 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 
 ### 개발
 
-1. PRD 확인: `docs/prd/gugbab-voca.md`
-2. 미결 사항 결정 (SRS 알고리즘, 콘텐츠 시드 정책)
-3. `frontend-architect` 호출 → 아키텍처 설계
-4. `frontend-developer` 호출 → 구현
-5. `qa-engineer` → E2E 테스트
+1. `feature/{name}` 브랜치에서 작업
+2. `pnpm exec biome ci . && pnpm typecheck && pnpm test && pnpm build` 로 확인
+3. PR 생성 → `ci`·`visual-regression` 통과 후 머지 (시각 차이는 `accept-baseline` 라벨로 승인)
 
 ### 배포
 
@@ -119,20 +77,6 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 
 ---
 
-## 규칙 참조
-
-| 상황 | 파일 |
-|---|---|
-| Git 커밋 컨벤션 | `.claude/rules/git.md` |
-| 외부 정보 검증 | `.claude/rules/info-verification.md` |
-| 에이전트 설계 | `.claude/rules/agent-design.md` |
-| 스킬·에이전트 생성 절차 | `.claude/rules/creation-workflow.md` |
-| README 업데이트 | `.claude/rules/readme-update.md` |
-| 검증 정책 | `.claude/rules/verification-policy.md` |
-| TypeScript/React | `.claude/rules/typescript.md` |
-
----
-
 ## 업데이트 로그
 
 | 날짜 | 변경 내용 요약 |
@@ -145,3 +89,4 @@ frontend 주요 스킬 (gugbab-voca 직접 사용 후보):
 | 2026-05-16 | **Phase 8-1 헤더 install prompt 버튼**: `useInstallPrompt` 훅(beforeinstallprompt + display-mode standalone + iOS Safari 감지). 환경별 분기 — Android Chrome·Desktop Chrome/Edge는 native install 다이얼로그, iOS Safari는 "공유 → 홈 화면에 추가" 4단계 안내 모달, 이미 설치된 standalone 모드는 자동 숨김. ESC·backdrop 클릭 모달 닫기. 단위 테스트 15/15 PASS (iOS·Android·Desktop·standalone·미지원 시나리오 모두) |
 | 2026-09-04 | **공유 설정 레포(00_gugbab-claude) sync 대규모 반영**: 훅 스위트 .cjs→.js 전면 교체(20개, `hooks/package.json` commonjs 마커로 type:module 호환) + tdd-guard→adversarial-test-guard/fake-impl-guard 재설계, 슬래시 커맨드 10종 레포 내 반영, 에이전트 27→35(±: planner·mvp-scope-planner·spec-writer·seo-content-writer-coach·socratic-interviewer 제거, backend 2종·validation 7종·meta 3종·frontend-domain-refactorer 추가), 스킬 48→112(architecture·health·writing 카테고리 신설, SEO 스위트 등), rules 갱신(adversarial-testing 신설·codex-review 컴패니언 경로). README 카탈로그 동기화 |
 | 2026-10-01 | **@gugbab 업그레이드 + CI 보호 통일 + 공유 설정 sync 반영**: hooks 1.3.1·styled-mui 1.1.0·tokens 1.1.0 / ci.yml 신설(필수 검사 `ci`, 액션 SHA 고정)·visual-regression.yml 보안 강화(event→env·head.sha·refs/heads push·ci 상태 승계)·archive-vr-diffs → `vrt-archive` 브랜치 보관 / sync: 생성·검증 룰과 creator 에이전트 3종을 00 레포로 이관(에이전트 35→32), 스킬 재편 112→111(backend 5종·vercel-workflow·next-intl-i18n 추가, 미사용 9종 제거 — 실사용 중인 `react-virtuoso`는 복원), 훅 자립화(_lib.js 제거, 19개). CLAUDE.md 깨진 rules 참조 정리 |
+| 2026-11-25 | 레포 로컬 하네스(`.claude/`·`docs/skills`·`docs/agents`·`docs/hooks`·`memory/`·`exports/`) 제거 — 하네스는 `gugbab-claude` 래퍼로 일원화. `.gitignore`에 `.claude/` 추가, CLAUDE.md를 프로젝트 전용으로 정리 |
